@@ -3,8 +3,11 @@ import os
 import sys
 import visdom
 
+from .models.detr import DETR
+
 import torch.backends.cudnn as cudnn
 cudnn.benchmark = True
+
 
 def main():
     opts = parse(sys.argv[1:])
@@ -21,6 +24,7 @@ def main():
     # 5. data loader
 
     # 6. network
+    model = DETR(num_classes=81, num_queries=100)
 
     # 7. criterion
 
