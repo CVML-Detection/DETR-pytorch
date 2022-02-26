@@ -18,6 +18,5 @@
   - [ ] Transformer Encoder
   - [ ] Transformer Decoder
 - [ ] Loss (Criterion) ( 팽진욱, 조성민 )
-  - [x] 구조 이해
   - [ ] Matcher (scipy.optimizer, Hungarian Algorithm)
   - [ ] Hungarian Loss (loss label, boxes loss, cardinality loss)
