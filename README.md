@@ -6,7 +6,7 @@
 
 ### paper : https://arxiv.org/abs/2005.12872
 
-하루 1시간씩 코딩
+- 하루 1시간씩 코딩
 
 - [ ] Dataset ( 조성민 )
   - [ ] Nested Tensor 분석 -> resize를 600x600로 구성
@@ -17,3 +17,7 @@
   - [ ] Backbone (ResNet50 + Positional Encoding)
   - [ ] Transformer Encoder
   - [ ] Transformer Decoder
+- [ ] Loss (Criterion) ( 팽진욱, 조성민 )
+  - [x] 구조 이해
+  - [ ] Matcher (scipy.optimizer, Hungarian Algorithm)
+  - [ ] Hungarian Loss (loss label, boxes loss, cardinality loss)
