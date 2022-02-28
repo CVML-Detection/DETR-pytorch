@@ -3,8 +3,11 @@ import torch.nn.functional as F
 import torchvision
 from torch import nn
 from torchvision.models._utils import IntermediateLayerGetter
+import sys, os
 
-from .positional_encoding import PositionalEncoding
+sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+
+from positional_encoding import PositionalEncoding
 
 
 class FrozenBatchNorm2d(torch.nn.Module):
@@ -54,12 +57,19 @@ class Backbone(nn.Module):
         self.backbone = IntermediateLayerGetter(model, return_layers={'layer4': "0"})
         self.num_channels = 2048
 
-        self.positional_encoding = PositionalEncoding(self.num_channels//2 , normalize=True)  # Not Learnable Version
+        self.positional_encoding = PositionalEncoding()  # Not Learnable Version
 
-    def forward(self):
-        # feat = self.backbone(image)
+    def forward(self, image):
+        feat = self.backbone(image)
         # feat = self.positional_encoding(feat)
-        return 0
+        return feat
+
 
 if __name__ == '__main__':
-    torch.rand(2, 3, 600, 600)
+    device_ids = [0]
+    device = torch.device('cuda:{}'.format(min(device_ids)) if torch.cuda.is_available() else 'cpu')
+
+    image = torch.rand(2, 3, 600, 600).to(device)
+    backbone = Backbone().to(device)
+    out = backbone(image)
+    print('test')
