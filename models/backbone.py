@@ -60,3 +60,6 @@ class Backbone(nn.Module):
         # feat = self.backbone(image)
         # feat = self.positional_encoding(feat)
         return 0
+
+if __name__ == '__main__':
+    torch.rand(2, 3, 600, 600)
