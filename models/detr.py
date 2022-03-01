@@ -14,8 +14,21 @@ class DETR(nn.Module):
 
         self.num_queries = num_queries
         self.num_classes = num_classes
+        self.input_proj = nn.Conv2d(backbone.num_channels, hidden_dim, kernel_size=1)
 
-    def forward(self):
-        # feat_sequence = self.backbone(image)
+    def forward(self, img):
+        out, pos = self.backbone(img)
+        out2 = self.input_proj(out)
         # feat = self.transformer(feat_sequence)
         return 0
+
+
+if __name__ == '__main__':
+    device_ids = [0]
+    device = torch.device('cuda:{}'.format(min(device_ids)) if torch.cuda.is_available() else 'cpu')
+
+    model = DETR().to(device)
+
+    image = torch.rand(2, 3, 600, 600).to(device)
+    out = model(image)
+    print('test')
