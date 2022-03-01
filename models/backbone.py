@@ -59,10 +59,10 @@ class Backbone(nn.Module):
 
         self.positional_encoding = PositionalEncoding()  # Not Learnable Version
 
-    def forward(self, image):
-        feat = self.backbone(image)
-        # feat = self.positional_encoding(feat)
-        return feat
+    def forward(self, img):
+        feat = self.backbone(img)
+        pos = self.positional_encoding(feat)
+        return feat, pos
 
 
 if __name__ == '__main__':
@@ -71,5 +71,5 @@ if __name__ == '__main__':
 
     image = torch.rand(2, 3, 600, 600).to(device)
     backbone = Backbone().to(device)
-    out = backbone(image)
+    feat, pos = backbone(image)
     print('test')

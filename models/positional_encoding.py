@@ -11,5 +11,6 @@ class PositionalEncoding(nn.Module):
         self.normalize = True
         self.scale = 2 * math.pi
 
-    def forward(self):
-        return 0
+    def forward(self, feat):
+        pos = torch.rand(2, 256, 38, 38).to(feat.device)    # FIXME) Positional Encoding은 기존 코드에서 mask 에만 적용, 의미 파악 필요
+        return pos
