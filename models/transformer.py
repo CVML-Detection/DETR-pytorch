@@ -12,7 +12,13 @@ class Transformer(nn.Module):
         self.decoder = Decoder(num_layers=6, d_model=256, nhead=8, dim_feedforward=2048, dropout=0.1)
         
 
-    def forward(self):
+    def forward(self, src, query_embed):
+        bs, c, h, w = src.shape
+        src = src.flatten(2).permute(2,0,1)
+        query_embed = query_embed.unsqueeze(1).repeat(1, bs, 1)
+        tgt = torch.zeros_like(query_embed)
+        # a = self.encoder(src)
+        # b = self.decoder(tgt, a, query_embed)
         return 0
 
 
