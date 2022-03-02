@@ -20,7 +20,7 @@ class DETR(nn.Module):
     def forward(self, img):
         out, pos = self.backbone(img)
         out2 = self.input_proj(out)
-        # feat = self.transformer(feat_sequence)
+        # feat = self.transformer(out2, self.query_embed)
         return 0
 
 
