@@ -20,9 +20,9 @@
 - [x] Data structure of official DETR
 ```
 target = 
-{'boxes' : tensor([# obj, 4], float32),
- 'labels' : tensor([#obj]), int64),
- 'image_id' : tensor([1]), int64),
+{'boxes' : tensor([# obj, 4], float32),    cf - boxes 는 [0 - 1] normalized 인 cxcy
+ 'labels' : tensor([#obj]), int64),        cf - labels 는 1 ~ 90 인 coco label 로 되어있고 
+ 'image_id' : tensor([1]), int64),      
  'area' : tensor([#obj]), float32),
  'iscrowd' : tensor([#obj - 0 or 1], int64),
  'orig_size' : tensor([2 - H x W], int64),
