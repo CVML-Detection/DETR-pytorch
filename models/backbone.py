@@ -60,9 +60,9 @@ class Backbone(nn.Module):
         self.positional_encoding = PositionalEncoding()  # Not Learnable Version
 
     def forward(self, img):
-        feat = self.backbone(img)
-        pos = self.positional_encoding(feat)
-        return feat, pos
+        src = self.backbone(img)
+        pos = self.positional_encoding(src['0'])
+        return src, pos
 
 
 if __name__ == '__main__':
