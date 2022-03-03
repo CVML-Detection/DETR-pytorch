@@ -14,12 +14,13 @@ class DETR(nn.Module):
 
         self.num_queries = num_queries
         self.num_classes = num_classes
-        self.input_proj = nn.Conv2d(backbone.num_channels, hidden_dim, kernel_size=1)
+        self.input_proj = nn.Conv2d(backbone.num_channels, 256, kernel_size=1)
+        self.query_embed = nn.Embedding(num_queries, 256)
 
     def forward(self, img):
         out, pos = self.backbone(img)
         out2 = self.input_proj(out)
-        # feat = self.transformer(feat_sequence)
+        # feat = self.transformer(out2, self.query_embed)
         return 0
 
 
