@@ -22,6 +22,7 @@ import zipfile
 from dataset.detection_transforms import mosaic
 import dataset.transforms as T
 from dataset.transforms import ConvertCocoTarget
+from utils import cxcy_to_xy, coco_color_array
 
 
 def download_coco(root_dir='D:\data\\coco', remove_compressed_file=True):
@@ -164,6 +165,9 @@ class COCO_Dataset(Dataset):
         if self.transforms is not None:
             image, target = self.transforms(image, target)
 
+        if self.visualization:
+            self.visualize(image, target)
+
         return image, target
 
     def collate_fn(self, batch):
@@ -180,6 +184,51 @@ class COCO_Dataset(Dataset):
 
     def __len__(self):
         return len(self.ids)
+
+    def visualize(self, image, target, target_batch=0):
+
+        mean = np.array([0.485, 0.456, 0.406])
+        std = np.array([0.229, 0.224, 0.225])
+
+        # tensor to img
+        img_vis = np.array(image.permute(1, 2, 0), np.float32)  # C, W, H
+        img_vis *= std
+        img_vis += mean
+        img_vis = np.clip(img_vis, 0, 1)
+
+        labels = target['labels']
+        c_boxes = target['boxes']
+        boxes = cxcy_to_xy(c_boxes)
+
+        plt.figure('input')
+        plt.imshow(img_vis)
+
+        for i in range(len(boxes)):
+
+            resize_h = target['size'][0]
+            resize_w = target['size'][1]
+
+            x1 = boxes[i][0] * resize_w
+            y1 = boxes[i][1] * resize_h
+            x2 = boxes[i][2] * resize_w
+            y2 = boxes[i][3] * resize_h
+
+            # class
+            plt.text(x=x1 - 5,
+                     y=y1 - 5,
+                     s=str(self.coco_ids_to_class_names[labels[i].item()]),
+                     bbox=dict(boxstyle='round4',
+                               facecolor=coco_color_array[self.coco_ids_to_continuous_ids[labels[i].item()]],
+                               alpha=0.9))
+
+            # bounding box
+            plt.gca().add_patch(Rectangle(xy=(x1, y1),
+                                          width=x2 - x1,
+                                          height=y2 - y1,
+                                          linewidth=1,
+                                          edgecolor=coco_color_array[self.coco_ids_to_continuous_ids[labels[i].item()]],
+                                          facecolor='none'))
+        plt.show()
 
 
 if __name__ == '__main__':
@@ -213,7 +262,7 @@ if __name__ == '__main__':
         T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
     transforms_val = T.Compose([
-        T.RandomResize([600, 600], max_size=600),
+        T.RandomResize([600], max_size=600),
         normalize,
     ])
 
