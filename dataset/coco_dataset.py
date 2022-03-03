@@ -21,6 +21,7 @@ import zipfile
 # from utils import bar_custom, coco_color_array
 from dataset.detection_transforms import mosaic
 import dataset.transforms as T
+from dataset.transforms import ConvertCocoTarget
 
 
 def download_coco(root_dir='D:\data\\coco', remove_compressed_file=True):
@@ -128,13 +129,14 @@ class COCO_Dataset(Dataset):
         self.coco = COCO(os.path.join(self.root, 'annotations', 'instances_' + self.set_name + '.json'))
 
         self.ids = list(sorted(self.coco.imgToAnns.keys()))  # anno 가 존재하는 것만
-        # self.ids = self.coco.getImgIds()
 
         self.coco_ids = sorted(self.coco.getCatIds())  # list of coco labels [1, ...11, 13, ... 90]  # 0 ~ 79 to 1 ~ 90
         self.coco_ids_to_continuous_ids = {coco_id: i for i, coco_id in enumerate(self.coco_ids)}  # 1 ~ 90 to 0 ~ 79
         # int to int
         self.coco_ids_to_class_names = {category['id']: category['name'] for category in
                                         self.coco.loadCats(self.coco_ids)}  # len 80
+
+        self.prepare = ConvertCocoTarget()
         # int to string
         # {1 : 'person', 2: 'bicycle', ...}
         '''
@@ -144,8 +146,6 @@ class COCO_Dataset(Dataset):
         '''
 
     def __getitem__(self, index):
-
-        # --------------------------- load data ---------------------------
         # 1. id
         id = self.ids[index]
 
@@ -157,95 +157,17 @@ class COCO_Dataset(Dataset):
 
         # 3. load anno
         target = self.coco.loadAnns(ids=self.coco.getAnnIds(imgIds=id))
+        target = {'image_id': id, 'annotations': target}
 
+        # 4. convert to coco target
+        image, target = self.prepare(image, target)
         if self.transforms is not None:
             image, target = self.transforms(image, target)
-        #
-        # det_anno = self.make_det_annos(target)           # anno -> [x1, y1, x2, y2, c] numpy 배열로
-        # boxes = torch.FloatTensor(det_anno[:, :4])     # numpy to Tensor
-        # labels = torch.LongTensor(det_anno[:, 4])
-        #
-        # if self.transform is not None:
-        #     image, boxes, labels = self.transform(image, boxes, labels)
-        # print("boxes:", boxes)
-        #
-        # if self.visualization:
-        #     # ----------------- visualization -----------------
-        #     mean = np.array([0.485, 0.456, 0.406])
-        #     std = np.array([0.229, 0.224, 0.225])
-        #
-        #     # tensor to img
-        #     img_vis = np.array(image.permute(1, 2, 0), np.float32)  # C, W, H
-        #     img_vis *= std
-        #     img_vis += mean
-        #     img_vis = np.clip(img_vis, 0, 1)
-        #
-        #     plt.figure('input')
-        #     plt.imshow(img_vis)
-        #     print('num objects : {}'.format(len(boxes)))
-        #
-        #     for i in range(len(boxes)):
-        #
-        #         new_h_scale = new_w_scale = 1
-        #
-        #         # find box_normalization of DetResize from transforms
-        #         for trans in self.transform.transforms:
-        #             if hasattr(trans, 'box_normalization') and trans.box_normalization:
-        #                 new_h_scale, new_w_scale = image.size()[1:]
-        #                 break
-        #
-        #         x1 = boxes[i][0] * new_w_scale
-        #         y1 = boxes[i][1] * new_h_scale
-        #         x2 = boxes[i][2] * new_w_scale
-        #         y2 = boxes[i][3] * new_h_scale
-        #         # print(boxes[i], ':', self.coco_ids_to_class_names[self.coco_ids[labels[i]]])
-        #
-        #         # class
-        #         plt.text(x=x1 - 5,
-        #                  y=y1 - 5,
-        #                  s=str(self.coco_ids_to_class_names[self.coco_ids[labels[i]]]),
-        #                  bbox=dict(boxstyle='round4',
-        #                            facecolor=coco_color_array[labels[i]],
-        #                            alpha=0.9))
-        #
-        #         # bounding box
-        #         plt.gca().add_patch(Rectangle(xy=(x1, y1),
-        #                                       width=x2 - x1,
-        #                                       height=y2 - y1,
-        #                                       linewidth=1,
-        #                                       edgecolor=coco_color_array[labels[i]],
-        #                                       facecolor='none'))
-        #
-        #     plt.show()
 
         return image, target
 
-    # def make_det_annos(self, anno):
-    #
-    #     annotations = np.zeros((0, 5))
-    #     for idx, anno_dict in enumerate(anno):
-    #
-    #         if anno_dict['bbox'][2] < 1 or anno_dict['bbox'][3] < 1:
-    #             continue
-    #
-    #         annotation = np.zeros((1, 5))
-    #         annotation[0, :4] = anno_dict['bbox']
-    #
-    #         annotation[0, 4] = self.coco_ids_to_continuous_ids[anno_dict['category_id']]  # 원래 category_id가 18이면 들어가는 값은 16
-    #         annotations = np.append(annotations, annotation, axis=0)
-    #
-    #     # transform from [x, y, w, h] to [x1, y1, x2, y2]
-    #     annotations[:, 2] = annotations[:, 0] + annotations[:, 2]
-    #     annotations[:, 3] = annotations[:, 1] + annotations[:, 3]
-    #
-    #     return annotations
-    #
     def collate_fn(self, batch):
-        """
-        :param batch: an iterable of N sets from __getitem__()
-        :return: a tensor of images, lists of varying-size tensors of bounding boxes, labels, difficulties, img_name and
-        additional_info
-        """
+
         images = list()
         targets = list()
 
@@ -291,7 +213,7 @@ if __name__ == '__main__':
         T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
     transforms_val = T.Compose([
-        T.RandomResize([800, 800], max_size=800),
+        T.RandomResize([600, 600], max_size=600),
         normalize,
     ])
 
@@ -308,18 +230,17 @@ if __name__ == '__main__':
     #                             visualization=True)
 
     val_loader = torch.utils.data.DataLoader(coco_dataset,
-                                             batch_size=1,
+                                             batch_size=2,
                                              collate_fn=coco_dataset.collate_fn,
                                              shuffle=False,
                                              num_workers=0,
                                              pin_memory=True)
 
     for i, data in enumerate(val_loader):
+
         images = data[0]
-        boxes = data[1]
-        labels = data[2]
+        targets = data[1]
 
         images = images.to(device)
-        boxes = [b.to(device) for b in boxes]
-        labels = [l.to(device) for l in labels]
-        print(labels)
+        targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
+        print(targets)
