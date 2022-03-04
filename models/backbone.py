@@ -60,8 +60,8 @@ class Backbone(nn.Module):
         self.positional_encoding = PositionalEncoding()  # Not Learnable Version
 
     def forward(self, img):
-        src = self.backbone(img)
-        pos = self.positional_encoding(src['0'])
+        src = self.backbone(img)['0']
+        pos = self.positional_encoding(src)
         return src, pos
 
 
@@ -71,5 +71,5 @@ if __name__ == '__main__':
 
     image = torch.rand(2, 3, 600, 600).to(device)
     backbone = Backbone().to(device)
-    feat, pos = backbone(image)
+    out_feat, out_pos = backbone(image)
     print('test')
