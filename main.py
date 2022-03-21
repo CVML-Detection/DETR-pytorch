@@ -6,6 +6,7 @@ import visdom
 from .models.detr import DETR
 
 import torch.backends.cudnn as cudnn
+import torch.utils.data.DataLoader as DataLoader
 cudnn.benchmark = True
 
 
@@ -19,9 +20,29 @@ def main():
     test_set = None
 
     # 4. data set
-    # - dataset
+    normalize = T.Compose([
+        T.ToTensor(),
+        T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    ])
+    transforms_val = T.Compose([
+        T.RandomResize([600], max_size=600),
+        normalize,
+    ])
 
+    coco_dataset = COCO_Dataset(root="D:/data/coco",
+                                split='val',
+                                download=True,
+                                transforms=transforms_val,
+                                visualization=False)
     # 5. data loader
+    data_loader = DataLoader(coco_dataset,
+                            batch_size=2,
+                            collate_fn=coco_dataset.collate_fn,
+                            shuffle=False,
+                            num_workers=0,
+                            pin_memory=True)
+
+    
 
     # 6. network
     model = DETR(num_classes=81, num_queries=100)
@@ -35,6 +56,13 @@ def main():
     # 10. resume
 
     # 11. Train Start
+
+    for i, data in enumerate(data_loader):
+        images = data[0]
+        targets = data[1]
+
+        images = images.to(device)
+        targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
 
 if __name__ == "__main__":
     main()
