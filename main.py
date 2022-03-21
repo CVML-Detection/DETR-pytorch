@@ -5,9 +5,10 @@ import visdom
 
 import torch.backends.cudnn as cudnn
 import torch.utils.data.DataLoader as DataLoader
+import .dataset.transforms as T
 
 from .models.detr import DETR
-from config import device
+from config import device, device_ids, parse
 
 cudnn.benchmark = True
 
