@@ -3,11 +3,12 @@ import torch.nn.functional as F
 import torchvision
 from torch import nn
 from torchvision.models._utils import IntermediateLayerGetter
-import sys, os
+import sys
+import os
 
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
-from positional_encoding import PositionalEncoding
+from models.positional_encoding import PositionalEncoding
 
 
 class FrozenBatchNorm2d(torch.nn.Module):

@@ -4,10 +4,10 @@ import sys
 import visdom
 
 import torch.backends.cudnn as cudnn
-import torch.utils.data.DataLoader as DataLoader
-import .dataset.transforms as T
+import dataset.transforms as T
 
-from .models.detr import DETR
+from models.detr import DETR
+from dataset.coco_dataset import COCO_Dataset
 from config import device, device_ids, parse
 
 cudnn.benchmark = True
@@ -17,10 +17,7 @@ def main():
     opts = parse(sys.argv[1:])
     
     # 3. visdom
-    vis = visdom.Visdom(port=opts.port)
-
-    train_set = None
-    test_set = None
+    # vis = visdom.Visdom(port=opts.port)
 
     # 4. data set
     normalize = T.Compose([
@@ -38,7 +35,7 @@ def main():
                                 transforms=transforms_val,
                                 visualization=False)
     # 5. data loader
-    data_loader = DataLoader(coco_dataset,
+    data_loader = torch.utils.data.DataLoader(coco_dataset,
                             batch_size=2,
                             collate_fn=coco_dataset.collate_fn,
                             shuffle=False,

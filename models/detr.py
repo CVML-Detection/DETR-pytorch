@@ -5,8 +5,8 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
-from backbone import Backbone
-from transformer import Transformer
+from models.backbone import Backbone
+from models.transformer import Transformer
 
 
 class DETR(nn.Module):
