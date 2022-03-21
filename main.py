@@ -3,10 +3,12 @@ import os
 import sys
 import visdom
 
-from .models.detr import DETR
-
 import torch.backends.cudnn as cudnn
 import torch.utils.data.DataLoader as DataLoader
+
+from .models.detr import DETR
+from config import device
+
 cudnn.benchmark = True
 
 
@@ -42,10 +44,8 @@ def main():
                             num_workers=0,
                             pin_memory=True)
 
-    
-
     # 6. network
-    model = DETR(num_classes=81, num_queries=100)
+    model = DETR(num_classes=81, num_queries=100).to(device)
 
     # 7. criterion
 
@@ -62,6 +62,7 @@ def main():
         targets = data[1]
 
         images = images.to(device)
+        out_feat = model(images)
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
 
 if __name__ == "__main__":
