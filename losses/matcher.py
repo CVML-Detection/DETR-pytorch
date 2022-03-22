@@ -64,3 +64,34 @@ class HungarianMatcher(nn.Module):
             
         return [(torch.as_tensor(i, dtype=torch.int64), torch.as_tensor(j, dtype=torch.int64)) for i, j in indices]
 
+
+if __name__ == '__main__':
+    import torch
+
+    # 7개의 category 가 있는 batch 2 의 targets
+    targets = [{'boxes': torch.FloatTensor([[0.5012, 0.5481, 0.9976, 0.8812]]),
+                'labels': torch.LongTensor([23]),
+                'image_id': torch.LongTensor([285]),
+                'area': torch.FloatTensor([264653.1875]),
+                'iscrowd': torch.LongTensor([0]),
+                'orig_size': torch.LongTensor([640, 586]),
+                'size': torch.LongTensor([600, 600])},
+               {'boxes': torch.FloatTensor([[0.6096, 0.5131, 0.3417, 0.8157],
+                                           [0.6409, 0.8972, 0.6402, 0.0899]]),
+                'labels': torch.LongTensor([1, 35]),
+                'image_id': torch.LongTensor([785]),
+                'area': torch.FloatTensor([36779.7031,  5123.4795]),
+                'iscrowd': torch.LongTensor([0, 0]),
+                'orig_size': torch.LongTensor([425, 640]),
+                'size': torch.LongTensor([600, 600])}]
+
+    # outputs_without_aux
+    outputs = {'pred_logits': torch.randn([2, 100, 82]),
+               'pred_boxes': torch.randn([2, 100, 4])
+               }
+
+    matcher = HungarianMatcher()
+    indices = matcher(outputs, targets)
+    print(indices)
+    # e.g) [(tensor([78]), tensor([0])), (tensor([45, 63]), tensor([0, 1]))]
+    # indices of batch 0 (row indices, col indices), indices of batch 1 (row indices, col indices)
