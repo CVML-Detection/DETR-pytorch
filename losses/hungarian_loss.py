@@ -11,6 +11,8 @@ class HungarianLoss(nn.Module):
 
     def _get_src_permutation_idx(self, indices):
         # permute predictions following indices
+        #
+        # exercise) _ indices : [[71, 0], [[15, 44], [1, 0]]] -> batch_idx : [0, 1, 1], src_inx : [71, 15, 44]
         batch_idx = torch.cat([torch.full_like(src, i) for i, (src, _) in enumerate(indices)])
         src_idx = torch.cat([src for (src, _) in indices])
         return batch_idx, src_idx
@@ -36,6 +38,7 @@ class HungarianLoss(nn.Module):
         target_boxes = torch.cat([t['boxes'][i] for t, (_, i) in zip(targets, indices)], dim=0)
         loss_bbox = F.l1_loss(src_boxes, target_boxes, reduction='none')
 
+        # # no mask loss
         # # Compute the average number of target boxes accross all nodes, for normalization purposes
         # num_boxes = sum(len(t["labels"]) for t in targets)
         # num_boxes = torch.as_tensor([num_boxes], dtype=torch.float, device=next(iter(outputs.values())).device)
