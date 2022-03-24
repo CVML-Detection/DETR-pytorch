@@ -89,9 +89,9 @@ class DecoderLayer(nn.Module):
         self.self_attn = nn.MultiheadAttention(d_model, nhead, dropout=dropout)
         self.multihead_attn = nn.MultiheadAttention(d_model, nhead, dropout=dropout)
         # Implementation of Feedforward model
-        self.linear1 = nn.Linear(d_model, dim_feedforward)
+        self.linear1 = nn.Linear(d_model, dim_feedforward)  # 256->2048
         self.dropout = nn.Dropout(dropout)
-        self.linear2 = nn.Linear(dim_feedforward, d_model)
+        self.linear2 = nn.Linear(dim_feedforward, d_model)  # 2048->256
 
         self.norm = nn.LayerNorm(d_model)
         self.activation = F.relu

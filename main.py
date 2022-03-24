@@ -29,21 +29,21 @@ def main():
         normalize,
     ])
 
-    coco_dataset = COCO_Dataset(root="D:/data/coco",
+    coco_dataset = COCO_Dataset(root=opts.data_root,
                                 split='val',
                                 download=True,
                                 transforms=transforms_val,
                                 visualization=False)
     # 5. data loader
     data_loader = torch.utils.data.DataLoader(coco_dataset,
-                            batch_size=2,
+                            batch_size=opts.batch_size,
                             collate_fn=coco_dataset.collate_fn,
                             shuffle=False,
                             num_workers=0,
                             pin_memory=True)
 
     # 6. network
-    model = DETR(num_classes=81, num_queries=100).to(device)
+    model = DETR(num_classes=opts.num_classes, num_queries=100).to(device)
 
     # 7. criterion
 

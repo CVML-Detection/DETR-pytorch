@@ -19,7 +19,7 @@ class DETR(nn.Module):
         self.num_classes = num_classes
         self.input_proj = nn.Conv2d(self.backbone.num_channels, 256, kernel_size=1)
         self.query_embed = nn.Embedding(num_queries, 256)
-        self.class_embed = nn.Linear(256, num_classes + 1)
+        self.class_embed = nn.Linear(256, num_classes)
         self.bbox_embed = MLP(256, 256, 4, 3)
         self.aux_loss = True
 

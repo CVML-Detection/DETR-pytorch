@@ -11,7 +11,7 @@ def parse(args):
     parser.add_argument('--epoch', type=int, default=273)
     parser.add_argument('--port', type=str, default='2015')
     parser.add_argument('--lr', type=float, default=1e-3)
-    parser.add_argument('--batch_size', type=int, default=64)
+    parser.add_argument('--batch_size', type=int, default=2)
     parser.add_argument('--vis_step', type=int, default=100)
     parser.add_argument('--burn_in', type=int, default=4000)  # 64000 / b_s | b_s == 16 -> 4000 | b_s == 64 -> 1000
 
@@ -24,9 +24,9 @@ def parse(args):
 
     # FIXME choose your dataset root
     parser.add_argument('--data_root', type=str, default='/home/cvmlserver5/Sungmin/data/coco')
-
+    parser.add_argument('--data_root', type=str, default="D:/data/coco")
     parser.add_argument('--data_type', type=str, default='coco', help='choose voc or coco')  # FIXME
-    parser.add_argument('--num_classes', type=int, default=80)
+    parser.add_argument('--num_classes', type=int, default=81)
 
     opts = parser.parse_args(args)
     print(opts)
