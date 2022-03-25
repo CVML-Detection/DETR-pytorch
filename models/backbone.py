@@ -55,7 +55,7 @@ class Backbone(nn.Module):
         super().__init__()
 
         model = getattr(torchvision.models, 'resnet50')(replace_stride_with_dilation=[False,False,True], pretrained=True, norm_layer=FrozenBatchNorm2d)
-        self.backbone = IntermediateLayerGetter(model, return_layers={'layer4': "0"})   # ISSUE ) 기존 ResNet50이랑 똑같은데 뭐가 다른지 모르겠음
+        self.backbone = IntermediateLayerGetter(model, return_layers={'layer4': "0"})
         self.num_channels = 2048
 
         self.positional_encoding = PositionalEncoding()  # Not Learnable Version
