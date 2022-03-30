@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from scipy.optimize import linear_sum_assignment
+from utils import cxcy_to_xy
 # refer to https://github.com/facebookresearch/detr/blob/main/models/matcher.py
 
 
@@ -49,7 +50,7 @@ class HungarianMatcher(nn.Module):
         cost_bbox = torch.cdist(out_bbox, tgt_bbox, p=1)
 
         # Compute the giou cost betwen boxes
-        # cost_giou = -generalized_box_iou(box_cxcywh_to_xyxy(out_bbox), box_cxcywh_to_xyxy(tgt_bbox))
+        # cost_giou = -generalized_box_iou(cxcy_to_xy(out_bbox), cxcy_to_xy(tgt_bbox))
 
         # Final cost matrix
         C = self.cost_bbox * cost_bbox + self.cost_class * cost_class # + self.cost_giou * cost_giou
