@@ -54,7 +54,7 @@ class HungarianMatcher(nn.Module):
         cost_giou = -giou_loss(cxcy_to_xy(out_bbox), cxcy_to_xy(tgt_bbox))
 
         # Final cost matrix
-        C = self.cost_bbox * cost_bbox + self.cost_class * cost_class # + self.cost_giou * cost_giou
+        C = self.cost_bbox * cost_bbox + self.cost_class * cost_class + self.cost_giou * cost_giou
         C = C.view(bs, num_queries, -1).cpu()
 
         sizes = [len(v["boxes"]) for v in targets]
