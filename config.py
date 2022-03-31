@@ -23,7 +23,7 @@ def parse(args):
     parser.add_argument('--start_epoch', type=int, default=0)
 
     # FIXME choose your dataset root
-    parser.add_argument('--data_root', type=str, default='/home/cvmlserver5/Sungmin/data/coco')
+    #parser.add_argument('--data_root', type=str, default='/home/cvmlserver5/Sungmin/data/coco')
     parser.add_argument('--data_root', type=str, default="D:/data/coco")
     parser.add_argument('--data_type', type=str, default='coco', help='choose voc or coco')  # FIXME
     parser.add_argument('--num_classes', type=int, default=81)

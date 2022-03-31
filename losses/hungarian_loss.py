@@ -121,6 +121,6 @@ if __name__ == '__main__':
                }
 
     matcher = HungarianMatcher()
-    criterion = HungarianLoss(num_classes=80, matcher=matcher)
+    criterion = HungarianLoss(num_classes=81, matcher=matcher)
     loss = criterion(outputs, targets)
     print(loss)
