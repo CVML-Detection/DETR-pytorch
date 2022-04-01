@@ -292,4 +292,4 @@ if __name__ == '__main__':
 
         images = images.to(device)
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
-        print(targets)
+        print(targets[0]['labels'])

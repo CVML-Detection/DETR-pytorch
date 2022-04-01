@@ -26,7 +26,7 @@ def parse(args):
     #parser.add_argument('--data_root', type=str, default='/home/cvmlserver5/Sungmin/data/coco')
     parser.add_argument('--data_root', type=str, default="D:/data/coco")
     parser.add_argument('--data_type', type=str, default='coco', help='choose voc or coco')  # FIXME
-    parser.add_argument('--num_classes', type=int, default=81)
+    parser.add_argument('--num_classes', type=int, default=91)
 
     opts = parser.parse_args(args)
     print(opts)

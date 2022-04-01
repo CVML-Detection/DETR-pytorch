@@ -1,7 +1,81 @@
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from utils import cxcy_to_xy
+from utils import cxcy_to_xy, box_cxcywh_to_xyxy
+from losses.generalized_iou import generalized_box_iou
+from torch import Tensor
+import torch
+
+
+def box_cxcywh_to_xyxy(x):
+    x_c, y_c, w, h = x.unbind(-1)
+    b = [(x_c - 0.5 * w), (y_c - 0.5 * h),
+         (x_c + 0.5 * w), (y_c + 0.5 * h)]
+    return torch.stack(b, dim=-1)
+
+
+def generalized_box_iou(boxes1, boxes2):
+    """
+    Generalized IoU from https://giou.stanford.edu/
+
+    The boxes should be in [x0, y0, x1, y1] format
+
+    Returns a [N, M] pairwise matrix, where N = len(boxes1)
+    and M = len(boxes2)
+    """
+    # degenerate boxes gives inf / nan results
+    # so do an early check
+    assert (boxes1[:, 2:] >= boxes1[:, :2]).all()
+    assert (boxes2[:, 2:] >= boxes2[:, :2]).all()
+    iou, union = box_iou(boxes1, boxes2)
+
+    lt = torch.min(boxes1[:, None, :2], boxes2[:, :2])
+    rb = torch.max(boxes1[:, None, 2:], boxes2[:, 2:])
+
+    wh = (rb - lt).clamp(min=0)  # [N,M,2]
+    area = wh[:, :, 0] * wh[:, :, 1]
+
+    return iou - (area - union) / area
+
+
+def box_iou(boxes1, boxes2):
+    area1 = box_area(boxes1)
+    area2 = box_area(boxes2)
+
+    lt = torch.max(boxes1[:, None, :2], boxes2[:, :2])  # [N,M,2]
+    rb = torch.min(boxes1[:, None, 2:], boxes2[:, 2:])  # [N,M,2]
+
+    wh = (rb - lt).clamp(min=0)  # [N,M,2]
+    inter = wh[:, :, 0] * wh[:, :, 1]  # [N,M]
+
+    union = area1[:, None] + area2 - inter
+
+    iou = inter / union
+    return iou, union
+
+
+def _upcast(t: Tensor) -> Tensor:
+    # Protects from numerical overflows in multiplications by upcasting to the equivalent higher type
+    if t.is_floating_point():
+        return t if t.dtype in (torch.float32, torch.float64) else t.float()
+    else:
+        return t if t.dtype in (torch.int32, torch.int64) else t.int()
+
+
+def box_area(boxes: Tensor) -> Tensor:
+    """
+    Computes the area of a set of bounding boxes, which are specified by its
+    (x1, y1, x2, y2) coordinates.
+
+    Args:
+        boxes (Tensor[N, 4]): boxes for which the area will be computed. They
+            are expected to be in (x1, y1, x2, y2) format with
+            ``0 <= x1 < x2`` and ``0 <= y1 < y2``.
+
+    Returns:
+        area (Tensor[N]): area for each box
+    """
+    boxes = _upcast(boxes)
+    return (boxes[:, 2] - boxes[:, 0]) * (boxes[:, 3] - boxes[:, 1])
 
 
 class HungarianLoss(nn.Module):
@@ -9,6 +83,11 @@ class HungarianLoss(nn.Module):
         super().__init__()
         self.num_classes = num_classes  # class 갯수 - 이거 왜 90 개로 기준 되어있는것이지? -- issue?
         self.matcher = matcher
+
+        self.eos_coef = 0.1
+        self.empty_weight = torch.ones(self.num_classes + 1)
+        self.empty_weight[-1] = self.eos_coef
+        # self.register_buffer('empty_weight', self.empty_weight)
 
     def _get_src_permutation_idx(self, indices):
         # permute predictions following indices
@@ -60,6 +139,7 @@ class HungarianLoss(nn.Module):
         target_classes_o = torch.cat([t["labels"][J] for t, (_, J) in zip(targets, indices)])
         target_classes = torch.full(src_logits.shape[:2], self.num_classes, dtype=torch.int64, device=src_logits.device)
         target_classes[src_idx] = target_classes_o
+
         loss_ce = F.cross_entropy(src_logits.transpose(1, 2), target_classes)
 
         # 4) box loss
@@ -69,19 +149,9 @@ class HungarianLoss(nn.Module):
         loss_bbox = F.l1_loss(src_boxes, target_boxes, reduction='none')
 
         # 5) giou loss
-        giou_loss = self.giou_loss(cxcy_to_xy(src_boxes), cxcy_to_xy(target_boxes))
+        # giou_loss1 = self.giou_loss(cxcy_to_xy(src_boxes), cxcy_to_xy(target_boxes))
 
-        # # no mask loss
-        # # Compute the average number of target boxes accross all nodes, for normalization purposes
-        # num_boxes = sum(len(t["labels"]) for t in targets)
-        # num_boxes = torch.as_tensor([num_boxes], dtype=torch.float, device=next(iter(outputs.values())).device)
-        # losses = {}
-        # losses['loss_bbox'] = loss_bbox.sum() / num_boxes
-        #
-        # loss_giou = 1 - torch.diag(box_ops.generalized_box_iou(
-        #     box_ops.box_cxcywh_to_xyxy(src_boxes),
-        #     box_ops.box_cxcywh_to_xyxy(target_boxes)))
-        # losses['loss_giou'] = loss_giou.sum() / num_boxes
+        giou_loss = generalized_box_iou(box_cxcywh_to_xyxy(src_boxes), box_cxcywh_to_xyxy(target_boxes))
 
         class_losses = loss_ce.sum()
         boxes_losses = loss_bbox.sum()
@@ -106,8 +176,8 @@ if __name__ == '__main__':
                 'iscrowd': torch.LongTensor([0]),
                 'orig_size': torch.LongTensor([640, 586]),
                 'size': torch.LongTensor([600, 600])},
-               {'boxes': torch.FloatTensor([[0.6096, 0.5131, 0.3417, 0.8157],
-                                           [0.6409, 0.8972, 0.6402, 0.0899]]),
+               {'boxes': torch.FloatTensor([[0.6096, 0.5131, 0.5417, 0.8157],
+                                           [0.6409, 0.8972, 0.6402, 0.8099]]),
                 'labels': torch.LongTensor([1, 35]),
                 'image_id': torch.LongTensor([785]),
                 'area': torch.FloatTensor([36779.7031,  5123.4795]),
