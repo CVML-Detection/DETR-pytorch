@@ -19,7 +19,7 @@ class DETR(nn.Module):
         self.num_classes = num_classes
         self.input_proj = nn.Conv2d(self.backbone.num_channels, 256, kernel_size=1)
         self.query_embed = nn.Embedding(num_queries, 256)
-        self.class_embed = nn.Linear(256, num_classes)
+        self.class_embed = nn.Linear(256, num_classes + 1)
         self.bbox_embed = MLP(256, 256, 4, 3)
         self.aux_loss = True
 
@@ -65,5 +65,6 @@ if __name__ == '__main__':
     model = DETR().to(device)
 
     image = torch.rand(2, 3, 600, 600).to(device)
-    out_feat = model(image)
+    outputs = model(image)
+    outputs['pred_logtis']
     print('test')
