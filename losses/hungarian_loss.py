@@ -151,7 +151,7 @@ class HungarianLoss(nn.Module):
         # 5) giou loss
         # giou_loss1 = self.giou_loss(cxcy_to_xy(src_boxes), cxcy_to_xy(target_boxes))
 
-        giou_loss = generalized_box_iou(box_cxcywh_to_xyxy(src_boxes), box_cxcywh_to_xyxy(target_boxes))
+        giou_loss = -generalized_box_iou(box_cxcywh_to_xyxy(src_boxes), box_cxcywh_to_xyxy(target_boxes))
 
         class_losses = loss_ce.sum()
         boxes_losses = loss_bbox.sum()
@@ -168,29 +168,68 @@ if __name__ == '__main__':
     from losses.matcher import HungarianMatcher
     import torch
 
+    targets = [{'boxes': torch.FloatTensor([[0.3896, 0.4161, 0.0386, 0.1631],
+                                            [0.1276, 0.5052, 0.2333, 0.2227],
+                                            [0.9342, 0.5835, 0.1271, 0.1848],
+                                            [0.6047, 0.6325, 0.0875, 0.2414],
+                                            [0.5025, 0.6273, 0.0966, 0.2312],
+                                            [0.6692, 0.6190, 0.0471, 0.1910],
+                                            [0.5128, 0.5283, 0.0337, 0.0272],
+                                            [0.6864, 0.5320, 0.0829, 0.3240],
+                                            [0.6125, 0.4462, 0.0236, 0.0839],
+                                            [0.8119, 0.5017, 0.0230, 0.0375],
+                                            [0.7863, 0.5364, 0.0317, 0.2542],
+                                            [0.9562, 0.7717, 0.0224, 0.1073],
+                                            [0.9682, 0.7781, 0.0201, 0.1090],
+                                            [0.7106, 0.3100, 0.0218, 0.0514],
+                                            [0.8866, 0.8316, 0.0573, 0.2105],
+                                            [0.5569, 0.5167, 0.0178, 0.0529],
+                                            [0.6517, 0.5288, 0.0150, 0.0294],
+                                            [0.3880, 0.4784, 0.0222, 0.0414],
+                                            [0.5338, 0.4879, 0.0152, 0.0393],
+                                            [0.6000, 0.6471, 0.1962, 0.2088]]),
+                 'labels': torch.LongTensor([64, 72, 72, 62, 62, 62, 62,  1,  1, 78, 82, 84, 84, 85, 86, 86, 62, 86, 86, 67]),
+                 'image_id': torch.LongTensor([139]),
+                 'area': torch.FloatTensor([702.2101, 17488.5430,  7702.1807,  2964.8022,  2421.3699,  1702.5177,
+                                            277.4844,  3846.5366,   574.5752,   287.4813,  2759.6499,   447.1068,
+                                            425.9598,   297.9721,  2867.4546,   235.2796,   120.1416,   250.2994,
+                                            158.7570,  3119.4846]),
+                 'iscrowd': torch.LongTensor([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
+                 'orig_size': torch.LongTensor([426, 640]),
+                 'size': torch.LongTensor([600, 600])},
+
+                {'boxes': torch.FloatTensor([[0.5012, 0.5481, 0.9976, 0.8812]]),
+                 'labels': torch.LongTensor([23]),
+                 'image_id': torch.LongTensor([285]),
+                 'area': torch.FloatTensor([264653.1875]),
+                 'iscrowd': torch.LongTensor([0]),
+                 'orig_size': torch.LongTensor([640, 586]),
+                 'size': torch.LongTensor([600, 600])}]
+
     # 7개의 category 가 있는 batch 2 의 targets
-    targets = [{'boxes': torch.FloatTensor([[0.5012, 0.5481, 0.9976, 0.8812]]),
-                'labels': torch.LongTensor([23]),
-                'image_id': torch.LongTensor([285]),
-                'area': torch.FloatTensor([264653.1875]),
-                'iscrowd': torch.LongTensor([0]),
-                'orig_size': torch.LongTensor([640, 586]),
-                'size': torch.LongTensor([600, 600])},
-               {'boxes': torch.FloatTensor([[0.6096, 0.5131, 0.5417, 0.8157],
-                                           [0.6409, 0.8972, 0.6402, 0.8099]]),
-                'labels': torch.LongTensor([1, 35]),
-                'image_id': torch.LongTensor([785]),
-                'area': torch.FloatTensor([36779.7031,  5123.4795]),
-                'iscrowd': torch.LongTensor([0, 0]),
-                'orig_size': torch.LongTensor([425, 640]),
-                'size': torch.LongTensor([600, 600])}]
+    # targets = [{'boxes': torch.FloatTensor([[0.5012, 0.5481, 0.9976, 0.8812]]),
+    #             'labels': torch.LongTensor([23]),
+    #             'image_id': torch.LongTensor([285]),
+    #             'area': torch.FloatTensor([264653.1875]),
+    #             'iscrowd': torch.LongTensor([0]),
+    #             'orig_size': torch.LongTensor([640, 586]),
+    #             'size': torch.LongTensor([600, 600])},
+    #            {'boxes': torch.FloatTensor([[0.6096, 0.5131, 0.5417, 0.8157],
+    #                                        [0.6409, 0.8972, 0.6402, 0.8099]]),
+    #             'labels': torch.LongTensor([1, 35]),
+    #             'image_id': torch.LongTensor([785]),
+    #             'area': torch.FloatTensor([36779.7031,  5123.4795]),
+    #             'iscrowd': torch.LongTensor([0, 0]),
+    #             'orig_size': torch.LongTensor([425, 640]),
+    #             'size': torch.LongTensor([600, 600])}]
 
     # outputs_without_aux
-    outputs = {'pred_logits': torch.randn([2, 100, 82]),
-               'pred_boxes': torch.randn([2, 100, 4])
+    torch.manual_seed(1)
+    outputs = {'pred_logits': torch.randn([2, 100, 92]),
+               'pred_boxes': torch.sigmoid(torch.randn([2, 100, 4]))
                }
 
     matcher = HungarianMatcher()
-    criterion = HungarianLoss(num_classes=81, matcher=matcher)
+    criterion = HungarianLoss(num_classes=91, matcher=matcher)
     loss = criterion(outputs, targets)
     print(loss)
