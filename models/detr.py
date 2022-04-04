@@ -10,7 +10,7 @@ from models.transformer import Transformer
 
 
 class DETR(nn.Module):
-    def __init__(self, num_classes=81, num_queries=100):
+    def __init__(self, num_classes=91, num_queries=100):
         super().__init__()
         self.backbone = Backbone()
         self.transformer = Transformer()
@@ -21,7 +21,7 @@ class DETR(nn.Module):
         self.query_embed = nn.Embedding(num_queries, 256)
         self.class_embed = nn.Linear(256, num_classes + 1)
         self.bbox_embed = MLP(256, 256, 4, 3)
-        self.aux_loss = True
+        self.aux_loss = False
 
     def forward(self, img):
         feat, pos = self.backbone(img)          # feat : (b,256,38,38) / pos : (b,256,38,38)
@@ -66,5 +66,6 @@ if __name__ == '__main__':
 
     image = torch.rand(2, 3, 600, 600).to(device)
     outputs = model(image)
-    outputs['pred_logtis']
+    print(outputs['pred_logits'].size())
+    print(outputs['pred_boxes'].size())
     print('test')
