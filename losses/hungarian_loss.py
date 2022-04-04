@@ -97,35 +97,6 @@ class HungarianLoss(nn.Module):
         src_idx = torch.cat([src for (src, _) in indices])
         return batch_idx, src_idx
 
-    def giou_loss(self, boxes1, boxes2):
-        """
-        boxes1 [B, size, size, 3, 4]
-        """
-        # iou loss
-        boxes1_area = (boxes1[..., 2] - boxes1[..., 0]) * (boxes1[..., 3] - boxes1[..., 1])  # [2, s, s, 3]
-        boxes2_area = (boxes2[..., 2] - boxes2[..., 0]) * (boxes2[..., 3] - boxes2[..., 1])  # [2, s, s, 3]
-
-        inter_left_up = torch.max(boxes1[..., :2], boxes2[..., :2])                          # [B, s, s, 3, 2]
-        inter_right_down = torch.min(boxes1[..., 2:], boxes2[..., 2:])                       # [B, s, s, 3, 2]
-
-        inter_section = torch.max(inter_right_down - inter_left_up, torch.zeros_like(inter_right_down))  # [B, s, s, 3, 2]
-        inter_area = inter_section[..., 0] * inter_section[..., 1]
-        union_area = boxes1_area + boxes2_area - inter_area                                  # [B, s, s, 3]
-        ious = 1.0 * inter_area / union_area                                                 # [B, s, s, 3]
-
-        # iou_loss = 1 - ious
-        # return iou_loss
-
-        outer_left_up = torch.min(boxes1[..., :2], boxes2[..., :2])                          # [B, s, s, 3, 2]
-        outer_right_down = torch.max(boxes1[..., 2:], boxes2[..., 2:])                       # [B, s, s, 3, 2]
-        outer_section = torch.max(outer_right_down - outer_left_up, torch.zeros_like(inter_right_down))
-        outer_area = outer_section[..., 0] * outer_section[..., 1]                           # [B, s, s, 3]
-
-        giou = ious - (outer_area - union_area)/outer_area
-        giou_loss = 1 - giou
-
-        return giou_loss
-
     def forward(self, outputs, targets):
         # 1) get permutation
         indices = self.matcher(outputs, targets)
@@ -145,22 +116,24 @@ class HungarianLoss(nn.Module):
         # 4) box loss
         assert 'pred_boxes' in outputs
         src_boxes = outputs['pred_boxes'][src_idx]
+        num_boxes = src_boxes.size(0)
         target_boxes = torch.cat([t['boxes'][i] for t, (_, i) in zip(targets, indices)], dim=0)
         loss_bbox = F.l1_loss(src_boxes, target_boxes, reduction='none')
 
         # 5) giou loss
-        # giou_loss1 = self.giou_loss(cxcy_to_xy(src_boxes), cxcy_to_xy(target_boxes))
+        giou_loss = 1 - torch.diag(
+            generalized_box_iou(box_cxcywh_to_xyxy(src_boxes), box_cxcywh_to_xyxy(target_boxes))
+        )
 
-        giou_loss = -generalized_box_iou(box_cxcywh_to_xyxy(src_boxes), box_cxcywh_to_xyxy(target_boxes))
-
-        class_losses = loss_ce.sum()
-        boxes_losses = loss_bbox.sum()
-        giou_losses = giou_loss.sum()
+        class_losses = loss_ce
+        boxes_losses = loss_bbox.sum() / num_boxes
+        giou_losses = giou_loss.sum() / num_boxes
 
         print("class losses : ", class_losses)
         print("boxes losses : ", boxes_losses)
         print("giou losses : ", giou_losses)
-        total_loss = class_losses + boxes_losses + giou_losses
+
+        total_loss = 1 * class_losses + 1 * boxes_losses + 1 * giou_losses
         return total_loss
 
 
