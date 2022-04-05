@@ -54,7 +54,9 @@ class Backbone(nn.Module):
     def __init__(self):
         super().__init__()
 
-        model = getattr(torchvision.models, 'resnet50')(replace_stride_with_dilation=[False,False,True], pretrained=True, norm_layer=FrozenBatchNorm2d)
+        model = getattr(torchvision.models, 'resnet50')(replace_stride_with_dilation=[False, False, True],
+                                                        pretrained=True,
+                                                        norm_layer=FrozenBatchNorm2d)
         self.backbone = IntermediateLayerGetter(model, return_layers={'layer4': "0"})
         self.num_channels = 2048
 
@@ -73,4 +75,6 @@ if __name__ == '__main__':
     image = torch.rand(2, 3, 600, 600).to(device)
     backbone = Backbone().to(device)
     out_feat, out_pos = backbone(image)
+    print(out_feat.size())
+    print(out_pos.size())
     print('test')
