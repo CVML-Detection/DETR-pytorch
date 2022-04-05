@@ -76,12 +76,18 @@ def main():
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=200, gamma=0.1)
 
     # 9. resume
-    # checkpoint = torch.load(os.path.join(opts.save_path, opts.save_file_name) + '.{}.pth.tar'
-    #                         .format(opts.start_epoch - 1), map_location=torch.device('cuda:{}'.format(opts.rank)))
-    # model.load_state_dict(checkpoint['model_state_dict'])             # load model state dict
-    # optimizer.load_state_dict(checkpoint['optimizer_state_dict'])     # load optimization state dict
-    # scheduler.load_state_dict(checkpoint['scheduler_state_dict'])     # load schedule state dict
-    # print('\nLoaded checkpoint from epoch %d.\n' % (int(opts.start_epoch) - 1))
+    if opts.start_epoch != 0:
+
+        checkpoint = torch.load(os.path.join(opts.save_path, opts.save_file_name) + '.{}.pth.tar'
+                                .format(opts.start_epoch - 1),
+                                map_location=torch.device('cuda:{}'.format(0)))
+        model.load_state_dict(checkpoint['model_state_dict'])                          # load model state dict
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])                  # load optimization state dict
+        scheduler.load_state_dict(checkpoint['scheduler_state_dict'])                  # load scheduler state dict
+        print('\nLoaded checkpoint from epoch %d.\n' % (int(opts.start_epoch) - 1))
+
+    else:
+        print('\nNo check point to resume.. train from scratch.\n')
 
     for epoch in range(opts.start_epoch, opts.epoch):
 
