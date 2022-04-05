@@ -22,6 +22,22 @@
 - [x] Loss (Criterion) ( 팽진욱, 조성민 )
   - [x] Matcher (scipy.optimizer, Hungarian Algorithm)
   - [x] Hungarian Loss (loss label, boxes loss, cardinality loss)
-  - [ ] Check vs original loss
+  - [x] Check versus original loss
 - [ ] Training
-  - [ ] Find training epoch, batch, lr
+  - [x] Find training epoch, batch, lr
+  - [ ] Compare optimizer for Transformer with Backbone
+
+```
+***** configuration *****
+optimizer        : AdamW
+lr               : 1e-4(Transformer) / 1e-5(Backbone)
+weight decay     : 1e-4
+initialzation    : Xavier(uniform)
+lr scheduler     : StepLR(at 200 epoch) - gamma 0.1
+batch size       : 64
+batch size / GPU : 4 
+num_GPU (paper)  : 16 V100
+Traning epoch    : 300
+```
+  
+  
