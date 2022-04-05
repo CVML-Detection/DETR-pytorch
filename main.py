@@ -11,17 +11,22 @@ from dataset.coco_dataset import COCO_Dataset
 from config import device, device_ids, parse
 from losses.hungarian_loss import HungarianLoss
 from losses.matcher import HungarianMatcher
+from train import train
 
 cudnn.benchmark = True
 
 
 def main():
+    # 1. configuration
     opts = parse(sys.argv[1:])
     
-    # 3. visdom
-    # vis = visdom.Visdom(port=opts.port)
+    # 2. visdom
+    vis = None
+    if opts.data_root == "D:/data/coco":
+        # for window
+        vis = visdom.Visdom(port='8097')
 
-    # 4. data set
+    # 3. dataset
     normalize = T.Compose([
         T.ToTensor(),
         T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
@@ -31,47 +36,64 @@ def main():
         normalize,
     ])
 
-    coco_dataset = COCO_Dataset(root=opts.data_root,
-                                split='val',
-                                download=True,
-                                transforms=transforms_val,
-                                visualization=False)
-    # 5. data loader
-    data_loader = torch.utils.data.DataLoader(coco_dataset,
-                            batch_size=opts.batch_size,
-                            collate_fn=coco_dataset.collate_fn,
-                            shuffle=False,
-                            num_workers=0,
-                            pin_memory=True)
+    train_set = COCO_Dataset(root=opts.data_root,
+                             split='train',
+                             download=True,
+                             transforms=transforms_val,
+                             visualization=False)
+    test_set = COCO_Dataset(root=opts.data_root,
+                            split='val',
+                            download=True,
+                            transforms=transforms_val,
+                            visualization=False)
 
-    # 6. network
+    # 4. dataloader
+    train_loader = torch.utils.data.DataLoader(train_set,
+                                               batch_size=2,
+                                               collate_fn=train_set.collate_fn,
+                                               shuffle=False,
+                                               num_workers=0,
+                                               pin_memory=True)
+
+    test_loader = torch.utils.data.DataLoader(test_set,
+                                              batch_size=1,
+                                              collate_fn=test_set.collate_fn,
+                                              shuffle=False,
+                                              num_workers=0,
+                                              pin_memory=True)
+
+    # 5. model (opts.num_classes = 91)
     model = DETR(num_classes=opts.num_classes, num_queries=100).to(device)
 
-    # 7. criterion
+    # 6. criterion
     matcher = HungarianMatcher()
-    criterion = HungarianLoss(num_classes=91, matcher=matcher).to(device)
+    criterion = HungarianLoss(num_classes=opts.num_classes, matcher=matcher).to(device)
 
+    # 7. optimizer
+    optimizer = torch.optim.AdamW(params=model.parameters(), lr=1e-5, weight_decay=1e-5)
 
-    # 8. optimizer
-    optimizer = torch.optim.AdamW(params=model.parameters(), lr=1e-3)
+    # 8. scheduler
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=200, gamma=0.1)
 
-    # 9. scheduler
+    # 9. resume
+    # checkpoint = torch.load(os.path.join(opts.save_path, opts.save_file_name) + '.{}.pth.tar'
+    #                         .format(opts.start_epoch - 1), map_location=torch.device('cuda:{}'.format(opts.rank)))
+    # model.load_state_dict(checkpoint['model_state_dict'])             # load model state dict
+    # optimizer.load_state_dict(checkpoint['optimizer_state_dict'])     # load optimization state dict
+    # scheduler.load_state_dict(checkpoint['scheduler_state_dict'])     # load schedule state dict
+    # print('\nLoaded checkpoint from epoch %d.\n' % (int(opts.start_epoch) - 1))
 
-    # 10. resume
+    for epoch in range(opts.start_epoch, opts.epoch):
 
-    # 11. Train Start
-    for i, data in enumerate(data_loader):
-
-        images = data[0]
-        targets = data[1]
-
-        images = images.to(device)
-        outputs = model(images)
-        targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
-        loss = criterion(outputs, targets)
-        # optimizer()
-        print(loss)
-
+        # 10. train
+        train(epoch=epoch,
+              vis=vis,
+              train_loader=train_loader,
+              model=model,
+              criterion=criterion,
+              optimizer=optimizer,
+              scheduler=scheduler,
+              opts=opts)
 
 
 if __name__ == "__main__":
