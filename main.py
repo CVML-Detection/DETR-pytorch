@@ -51,7 +51,9 @@ def main():
     # 7. criterion
     matcher = HungarianMatcher()
     criterion = HungarianLoss(num_classes=91, matcher=matcher).to(device)
+
     # 8. optimizer
+    optimizer = torch.optim.AdamW(params=model.parameters(), lr=1e-3)
 
     # 9. scheduler
 
@@ -70,6 +72,7 @@ def main():
         outputs = model(images)
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
         loss = criterion(outputs, targets)
+        # optimizer()
         print(loss)
 
 
