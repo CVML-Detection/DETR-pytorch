@@ -10,6 +10,13 @@ class Transformer(nn.Module):
         super().__init__()
         self.encoder = Encoder(num_layers=6, d_model=256, nhead=8, dim_feedforward=2048, dropout=0.1)
         self.decoder = Decoder(num_layers=6, d_model=256, nhead=8, dim_feedforward=2048, dropout=0.1)
+        self._reset_parameters()
+
+    def _reset_parameters(self):
+        print('reset params using xavier initializer')
+        for p in self.parameters():
+            if p.dim() > 1:
+                nn.init.xavier_uniform_(p)
 
     def forward(self, src, query_embed, pos_embed):
         bs, c, h, w = src.shape
@@ -49,7 +56,6 @@ class EncoderLayer(nn.Module):
         self.dropout = nn.Dropout(dropout)
 
         self.activation = F.relu
-
 
     def forward(self, src, pos):
         q = src + pos
