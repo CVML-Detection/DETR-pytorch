@@ -15,11 +15,13 @@
 - [x] Model ( 팽진욱 )
   - [x] 구조 이해
   - [x] Backbone (ResNet50 + Positional Encoding)
+    - [ ] Positional Encoding 분석
   - [x] Transformer Encoder
   - [x] Transformer Decoder
+  - [ ] TEST -> 잘 돌아가는지 TEST
 - [x] Loss (Criterion) ( 팽진욱, 조성민 )
   - [x] Matcher (scipy.optimizer, Hungarian Algorithm)
   - [x] Hungarian Loss (loss label, boxes loss, cardinality loss)
   - [ ] Check vs original loss
-- [ ] Training 
-  - [ ] Find training epoch, batch, lr 
+- [ ] Training
+  - [ ] Find training epoch, batch, lr
