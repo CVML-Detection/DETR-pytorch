@@ -129,10 +129,9 @@ class HungarianLoss(nn.Module):
         boxes_losses = loss_bbox.sum() / num_boxes
         giou_losses = giou_loss.sum() / num_boxes
 
-        print("class losses : ", class_losses)
-        print("boxes losses : ", boxes_losses)
-        print("giou losses : ", giou_losses)
-
+        # print("class losses : ", class_losses)
+        # print("boxes losses : ", boxes_losses)
+        # print("giou losses : ", giou_losses)
         total_loss = 1 * class_losses + 1 * boxes_losses + 1 * giou_losses
         return total_loss
 
