@@ -8,17 +8,17 @@ device = torch.device('cuda:{}'.format(min(device_ids)) if torch.cuda.is_availab
 
 def parse(args):
     parser = argparse.ArgumentParser()
-    parser.add_argument('--epoch', type=int, default=273)
+    parser.add_argument('--epoch', type=int, default=300)
     parser.add_argument('--port', type=str, default='2015')
-    parser.add_argument('--lr', type=float, default=1e-3)
+    parser.add_argument('--lr', type=float, default=1e-4)
     parser.add_argument('--batch_size', type=int, default=2)
     parser.add_argument('--vis_step', type=int, default=100)
-    parser.add_argument('--burn_in', type=int, default=4000)  # 64000 / b_s | b_s == 16 -> 4000 | b_s == 64 -> 1000
+    # parser.add_argument('--burn_in', type=int, default=4000)  # 64000 / b_s | b_s == 16 -> 4000 | b_s == 64 -> 1000
 
-    parser.add_argument('--num_workers', type=int, default=4)
-    parser.add_argument('--resize', type=int, help='320, 416, 608', default=416)
+    # parser.add_argument('--num_workers', type=int, default=4)
+    # parser.add_argument('--resize', type=int, help='320, 416, 608', default=416)
     parser.add_argument('--save_path', type=str, default='./saves')
-    parser.add_argument('--save_file_name', type=str, default='yolov3_darknet53_coco')  # FIXME
+    parser.add_argument('--save_file_name', type=str, default='detr_coco')  # FIXME
     parser.add_argument('--conf_thres', type=float, default=0.05)
     parser.add_argument('--start_epoch', type=int, default=0)
 
