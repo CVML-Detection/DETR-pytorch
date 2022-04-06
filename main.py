@@ -12,6 +12,7 @@ from config import device, device_ids, parse
 from losses.hungarian_loss import HungarianLoss
 from losses.matcher import HungarianMatcher
 from train import train
+from test import test
 
 cudnn.benchmark = True
 
@@ -41,6 +42,7 @@ def main():
                              download=True,
                              transforms=transforms_val,
                              visualization=False)
+
     test_set = COCO_Dataset(root=opts.data_root,
                             split='val',
                             download=True,
@@ -100,6 +102,14 @@ def main():
               optimizer=optimizer,
               scheduler=scheduler,
               opts=opts)
+
+        # 11. test
+        # test(epoch=epoch,
+        #      vis=vis,
+        #      test_loader=test_loader,
+        #      model=model,
+        #      criterion=criterion,
+        #      opts=opts)
 
 
 if __name__ == "__main__":
