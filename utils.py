@@ -7,6 +7,30 @@ import torch.nn.functional as F
 np.random.seed(1)
 coco_color_array = np.random.randint(256, size=(81, 3)) / 255  # In plt, rgb color space's range from 0 to 1
 
+# for coco label
+coco_labels = ('person', 'bicycle', 'car', 'motorcycle', 'airplane',
+               'bus', 'train', 'truck', 'boat', 'traffic light',
+               'fire hydrant', 'stop sign', 'parking meter', 'bench', 'bird',
+               'cat', 'dog', 'horse', 'sheep', 'cow',
+               'elephant', 'bear', 'zebra', 'giraffe', 'backpack',
+               'umbrella', 'handbag', 'tie', 'suitcase', 'frisbee',
+               'skis', 'snowboard', 'sports ball', 'kite', 'baseball bat',
+               'baseball glove', 'skateboard', 'surfboard', 'tennis racket', 'bottle',
+               'wine glass', 'cup', 'fork', 'knife', 'spoon',
+               'bowl', 'banana', 'apple', 'sandwich', 'orange',
+               'broccoli', 'carrot', 'hot dog', 'pizza', 'donut',
+               'cake', 'chair', 'couch', 'potted plant', 'bed',
+               'dining table', 'toilet', 'tv', 'laptop', 'mouse',
+               'remote', 'keyboard', 'cell phone', 'microwave', 'oven',
+               'toaster', 'sink', 'refrigerator', 'book', 'clock',
+               'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush')
+
+coco_label_map = {k: v for v, k in enumerate(coco_labels)}  # {0 ~ 79 : 'person' ~ 'toothbrush'}
+coco_label_map['background'] = 80                                # {80 : 'background'}
+coco_rev_label_map = {v: k for k, v in coco_label_map.items()}  # Inverse mapping
+np.random.seed(1)
+coco_color_array = np.random.randint(256, size=(91, 3)) / 255  # In plt, rgb color space's range from 0 to 1
+
 
 def cxcy_to_xy(cxcy):
 

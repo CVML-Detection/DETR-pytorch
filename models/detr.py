@@ -66,6 +66,10 @@ if __name__ == '__main__':
 
     image = torch.rand(2, 3, 600, 600).to(device)
     outputs = model(image)
-    print(outputs['pred_logits'].size())
-    print(outputs['pred_boxes'].size())
+    print(outputs['pred_logits'].size())  # torch.Size([2, 100, 92])
+    print(outputs['pred_boxes'].size())   # torch.Size([2, 100, 4])
     print('test')
+
+    import torch.nn.functional as F
+    out_logits = outputs['pred_logits']
+    print(F.softmax(out_logits, -1).size())
