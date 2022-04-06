@@ -40,4 +40,6 @@ num_GPU (paper)  : 16 V100
 Traning epoch    : 300
 ```
   
-  
+epoch 3 일때 test 사진
+
+![](./figures/result.png)
