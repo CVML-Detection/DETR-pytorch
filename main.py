@@ -51,7 +51,7 @@ def main():
 
     # 4. dataloader
     train_loader = torch.utils.data.DataLoader(train_set,
-                                               batch_size=2,
+                                               batch_size=opts.batch_size,
                                                collate_fn=train_set.collate_fn,
                                                shuffle=False,
                                                num_workers=0,
@@ -72,7 +72,7 @@ def main():
     criterion = HungarianLoss(num_classes=opts.num_classes, matcher=matcher).to(device)
 
     # 7. optimizer
-    optimizer = torch.optim.AdamW(params=model.parameters(), lr=1e-5, weight_decay=1e-5)
+    optimizer = torch.optim.AdamW(params=model.parameters(), lr=1e-5, weight_decay=opts.weight_decay)
 
     # 8. scheduler
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=200, gamma=0.1)
