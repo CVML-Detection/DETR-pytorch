@@ -170,7 +170,7 @@ if __name__ == "__main__":
         print('\nNo check point to resume.. train from scratch.\n')
 
     # 11. test
-    test(epoch=2,
+    test(epoch=8,
          vis=vis,
          test_loader=test_loader,
          model=model,
