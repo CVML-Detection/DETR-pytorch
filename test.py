@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 from utils import coco_label_map as label_map
 from utils import coco_color_array
-
+from evaluator import Evaluator
 
 def post_process(outputs, target_sizes):
     '''
@@ -92,6 +92,18 @@ def visualize_results(images, results):
 def test(epoch, vis, test_loader, model, criterion, opts):
     print('Testing of epoch [{}]'.format(epoch))
     model.eval()
+    checkpoint = torch.load(os.path.join(opts.save_path, opts.save_file_name) + '.{}.pth.tar'.format(epoch), map_location=device)
+    state_dict = check_point['model_state_dict']
+    model.load_state_dict(state_dict)
+
+    is_coco = hasattr(test_loader.dataset, 'coco')  # if True the set is COCO else VOC
+    if is_coco:
+        print('COCO dataset evaluation...')
+    else:
+        print('VOC dataset evaluation...')
+
+    evaluator = Evaluator(data_type=opts.data_type)
+
     with torch.no_grad():
         for idx, data in enumerate(test_loader):
             images = data[0]
