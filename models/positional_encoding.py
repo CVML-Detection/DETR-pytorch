@@ -15,8 +15,8 @@ class PositionalEncoding(nn.Module):
         b = feat.shape[0]
         w = feat.shape[2]
         h = feat.shape[3]
-        mask = torch.zeros(b, w, h, dtype=torch.bool).to(feat.device)
-        not_mask = ~mask
+        not_mask = torch.zeros(b, w, h, dtype=torch.bool).to(feat.device)
+        # not_mask = ~mask
         y_embed = not_mask.cumsum(1, dtype=torch.float32)
         x_embed = not_mask.cumsum(2, dtype=torch.float32)
         if self.normalize:

@@ -14,7 +14,7 @@ def parse(args):
     parser.add_argument('--lr', type=float, default=1e-4)               # initial lr (1e-5 after 200epoch)
     parser.add_argument('--lr_backbone', type=float, default=1e-5)      # backbone lr
     parser.add_argument('--weight_decay', type=float, default=1e-5)
-    parser.add_argument('--batch_size', type=int, default=64)           #
+    parser.add_argument('--batch_size', type=int, default=2)           #
 
     parser.add_argument('--layer_encoder', type=int, default=6)
     parser.add_argument('--layer_decoder', type=int, default=6)
@@ -27,7 +27,7 @@ def parse(args):
     parser.add_argument('--save_path', type=str, default='./saves')
     parser.add_argument('--save_file_name', type=str, default='detr_coco')  # FIXME
     parser.add_argument('--conf_thres', type=float, default=0.05)
-    parser.add_argument('--start_epoch', type=int, default=4)
+    parser.add_argument('--start_epoch', type=int, default=0)
 
     # FIXME choose your dataset root
     #parser.add_argument('--data_root', type=str, default='/home/cvmlserver5/Sungmin/data/coco')
