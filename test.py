@@ -1,7 +1,7 @@
 import torch
 from config import device
 import torch.nn.functional as F
-from utils import box_cxcywh_to_xyxy
+from utils import box_cxcywh_to_xyxy, detect
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 from utils import coco_label_map as label_map
@@ -106,7 +106,7 @@ def test(epoch, vis, test_loader, model, criterion, opts, visualize=False):
 
     with torch.no_grad():
         for idx, data in enumerate(test_loader):
-            # Get Loss!
+            ## Get Loss!
             images = data[0]
             targets = data[1]
             images = images.to(device)
@@ -114,12 +114,26 @@ def test(epoch, vis, test_loader, model, criterion, opts, visualize=False):
             targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
             loss = criterion(outputs, targets)
 
-            # Evaluate!
+            ## Evaluate!
+            pred_boxes, pred_labels, pred_scores = detect(pred=outputs, opts=opts)      # Detect 코드 필요 (utils.py)
+            if opts.data_type == 'coco':
+                img_id = test_loader.dataset.img_id[idx]
+                img_info = test_loader.dataset.coco.loadImgs(ids=img_id)[0]
+                coco_ids = test_loader.dataset.coco_ids
+                info = (pred_boxes, pred_labels, pred_scores, img_id, img_info, coco_ids)
+            else:
+                print('not yet..')
+                exit()
 
+            evaluator.get_info(info)
+
+            ## Visualize!
             if visualize:
                 orig_target_sizes = torch.stack([t["orig_size"] for t in targets], dim=0)
                 results = post_process(outputs, orig_target_sizes)
                 visualize_results(images, results)
+                
+        mAP = evaluator.evaluate(test_loader.dataset)
 
 
 if __name__ == "__main__":

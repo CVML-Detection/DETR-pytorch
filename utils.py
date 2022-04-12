@@ -46,6 +46,14 @@ def box_cxcywh_to_xyxy(x):
     return torch.stack(b, dim=-1)
 
 
+def detect(pred, opts):
+    # pred -> pred_bboxes, pred_scores 변환 필요
+
+    # 코드 분석 후 detect 코드 작성
+
+    return image_boxes, image_labels, image_scores
+
+
 class PostProcess(nn.Module):
     """ This module converts the model's output into the format expected by the coco api"""
     @torch.no_grad()

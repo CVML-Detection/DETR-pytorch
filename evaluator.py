@@ -10,7 +10,7 @@ class Evaluator(object):
             print("not ready yet..")
             exit()
         
-    def get_info(self,info):
+    def get_info(self, info):
         if self.data_type=='coco':
             print('...')
     
