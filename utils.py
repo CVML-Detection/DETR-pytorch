@@ -48,8 +48,30 @@ def box_cxcywh_to_xyxy(x):
 
 def detect(pred, opts):
     # pred -> pred_bboxes, pred_scores 변환 필요
+    pred_bboxes, pred_scores = pred['pred_boxes'], pred['pred_logits']      # (1, 100, 4) / (1, 100, 92)
+    n_classes = 92
+    # Lists to store boxes and scores for this image
+    image_boxes = list()
+    image_labels = list()
+    image_scores = list()
 
-    # 코드 분석 후 detect 코드 작성
+    for c in range(0, n_classes):
+        class_scores = pred_scores[:, :, c]
+        idx = class_scores > opts.conf_thres        # sort out elements more than 'min_score'
+
+        if idx.sum() == 0:
+            continue
+
+        class_scores = class_scores[idx]
+        class_bboxes = pred_bboxes[idx]
+        sorted_scores, idx_scores = class_scores.sort(descending=True)  # sorting 내림차순
+        sorted_boxes = class_bboxes[idx_scores]
+        sorted_boxes = sorted_boxes.clamp(0, 1)                         # 0~1로 Scaling -> FIXME 필요한지 확인
+
+        image_boxes.append(sorted_boxes)
+        image_labels.append(idx)
+        image_scores.append(sorted_scores)
+
 
     return image_boxes, image_labels, image_scores
 

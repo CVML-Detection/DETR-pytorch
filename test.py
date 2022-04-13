@@ -115,7 +115,7 @@ def test(epoch, vis, test_loader, model, criterion, opts, visualize=False):
             loss = criterion(outputs, targets)
 
             ## Evaluate!
-            pred_boxes, pred_labels, pred_scores = detect(pred=outputs, opts=opts)      # Detect 코드 필요 (utils.py)
+            pred_boxes, pred_labels, pred_scores = detect(pred=outputs, opts=opts)      # Detect 코드 수정 필요 (utils.py)
             if opts.data_type == 'coco':
                 img_id = test_loader.dataset.img_id[idx]
                 img_info = test_loader.dataset.coco.loadImgs(ids=img_id)[0]
