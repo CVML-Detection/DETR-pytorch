@@ -1,12 +1,13 @@
 import torch
 from config import device
 import torch.nn.functional as F
-from utils import box_cxcywh_to_xyxy
+from utils import box_cxcywh_to_xyxy, detect
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 from utils import coco_label_map as label_map
 from utils import coco_color_array
 from evaluator import Evaluator
+
 
 def post_process(outputs, target_sizes):
     '''
@@ -34,7 +35,6 @@ def post_process(outputs, target_sizes):
 
 def visualize_results(images, results):
     '''
-
     :param images:
     :param results: [{'scores': s, 'labels': l, 'boxes': b}]
     :param label_map:
@@ -89,10 +89,10 @@ def visualize_results(images, results):
     plt.show()
 
 
-def test(epoch, vis, test_loader, model, criterion, opts):
+def test(epoch, vis, test_loader, model, criterion, opts, visualize=False):
     print('Testing of epoch [{}]'.format(epoch))
     model.eval()
-    checkpoint = torch.load(os.path.join(opts.save_path, opts.save_file_name) + '.{}.pth.tar'.format(epoch), map_location=device)
+    check_point = torch.load(os.path.join(opts.save_path, opts.save_file_name) + '.{}.pth.tar'.format(epoch), map_location=device)
     state_dict = check_point['model_state_dict']
     model.load_state_dict(state_dict)
 
@@ -106,15 +106,34 @@ def test(epoch, vis, test_loader, model, criterion, opts):
 
     with torch.no_grad():
         for idx, data in enumerate(test_loader):
+            ## Get Loss!
             images = data[0]
             targets = data[1]
             images = images.to(device)
             outputs = model(images)
             targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
             loss = criterion(outputs, targets)
-            orig_target_sizes = torch.stack([t["orig_size"] for t in targets], dim=0)
-            results = post_process(outputs, orig_target_sizes)
-            visualize_results(images, results)
+
+            ## Evaluate!
+            pred_boxes, pred_labels, pred_scores = detect(pred=outputs, opts=opts)      # Detect 코드 수정 필요 (utils.py)
+            if opts.data_type == 'coco':
+                img_id = test_loader.dataset.img_id[idx]
+                img_info = test_loader.dataset.coco.loadImgs(ids=img_id)[0]
+                coco_ids = test_loader.dataset.coco_ids
+                info = (pred_boxes, pred_labels, pred_scores, img_id, img_info, coco_ids)
+            else:
+                print('not yet..')
+                exit()
+
+            evaluator.get_info(info)
+
+            ## Visualize!
+            if visualize:
+                orig_target_sizes = torch.stack([t["orig_size"] for t in targets], dim=0)
+                results = post_process(outputs, orig_target_sizes)
+                visualize_results(images, results)
+                
+        mAP = evaluator.evaluate(test_loader.dataset)
 
 
 if __name__ == "__main__":
@@ -182,11 +201,13 @@ if __name__ == "__main__":
         print('\nNo check point to resume.. train from scratch.\n')
 
     # 11. test
-    test(epoch=8,
+    test(epoch=4,
          vis=vis,
          test_loader=test_loader,
          model=model,
          criterion=criterion,
-         opts=opts)
+         opts=opts,
+         visualize=False,
+         )
 
 
