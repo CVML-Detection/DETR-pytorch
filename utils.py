@@ -2,6 +2,7 @@ import torch
 import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
+from config import device
 
 # set coco label color
 np.random.seed(1)
@@ -48,7 +49,7 @@ def box_cxcywh_to_xyxy(x):
 
 def detect(pred, opts):
     # pred -> pred_bboxes, pred_scores 변환 필요
-    pred_bboxes, pred_scores = pred['pred_boxes'], pred['pred_logits']      # (1, 100, 4) / (1, 100, 92)
+    pred_bboxes, pred_scores = pred['pred_boxes'].squeeze(), pred['pred_logits'].squeeze()      # (1, 100, 4) / (1, 100, 92)
     n_classes = 92
     # Lists to store boxes and scores for this image
     image_boxes = list()
@@ -56,7 +57,7 @@ def detect(pred, opts):
     image_scores = list()
 
     for c in range(0, n_classes):
-        class_scores = pred_scores[:, :, c]
+        class_scores = pred_scores[:, c]
         idx = class_scores > opts.conf_thres        # sort out elements more than 'min_score'
 
         if idx.sum() == 0:
@@ -69,9 +70,28 @@ def detect(pred, opts):
         sorted_boxes = sorted_boxes.clamp(0, 1)                         # 0~1로 Scaling -> FIXME 필요한지 확인
 
         image_boxes.append(sorted_boxes)
-        image_labels.append(idx)
+        image_labels.append(torch.LongTensor(idx.sum().item() * [c]).to(device))
         image_scores.append(sorted_scores)
 
+    # If no object in any class is found, store a placeholder for 'background'
+    if len(image_boxes) == 0:
+        image_boxes.append(torch.FloatTensor([[0., 0., 1., 1.]]).to(device))
+        image_labels.append(torch.LongTensor([opts.num_classes]).to(device))  # background
+        image_scores.append(torch.FloatTensor([0.]).to(device))
+
+    # Concatenate into single tensors
+    image_boxes = torch.cat(image_boxes, dim=0)  # (n_objects, 4)
+    image_labels = torch.cat(image_labels, dim=0)  # (n_objects)
+    image_scores = torch.cat(image_scores, dim=0)  # (n_objects)
+
+    n_objects = image_scores.size(0)
+    top_k = 200
+    # Keep only the top k objects --> 다구하고 200 개를 자르는 것은 느리지 않은가?
+    if n_objects > top_k:
+        image_scores, sort_ind = image_scores.sort(dim=0, descending=True)
+        image_scores = image_scores[:top_k]  # (top_k)
+        image_boxes = image_boxes[sort_ind][:top_k]  # (top_k, 4)
+        image_labels = image_labels[sort_ind][:top_k]  # (top_k)
 
     return image_boxes, image_labels, image_scores
 

@@ -3,6 +3,7 @@ import json
 import tempfile
 from pycocotools.cocoeval import COCOeval
 
+
 class Evaluator(object):
     def __init__(self, data_type='coco'):
         self.data_type = data_type
@@ -37,15 +38,14 @@ class Evaluator(object):
 
                 coco_result = {
                     'image_id': img_id,
-                    'category_id': coco_ids[int(pred_label)-1],     #FIXME 라벨 설정 필요
+                    'category_id': coco_ids[int(pred_label)],     # FIXME 라벨 설정 필요 pred_label-1? pred_label?
                     'score': float(pred_score),
                     'bbox': pred_box.tolist(),
                 }
                 self.results.append(coco_result)
 
-    
     def evaluate(self, dataset):
-        if self.data_type=='coco':
+        if self.data_type == 'coco':
             _, tmp = tempfile.mkstemp()
             json.dump(self.results, open(tmp, "w"))
 
