@@ -104,12 +104,13 @@ def main():
               opts=opts)
 
         # 11. test
-        # test(epoch=epoch,
-        #      vis=vis,
-        #      test_loader=test_loader,
-        #      model=model,
-        #      criterion=criterion,
-        #      opts=opts)
+        test(epoch=epoch,
+             vis=vis,
+             test_loader=test_loader,
+             model=model,
+             criterion=criterion,
+             opts=opts,
+             visualize=False)
 
 
 if __name__ == "__main__":
