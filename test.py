@@ -1,6 +1,7 @@
 import torch
-from config import device
 import torch.nn.functional as F
+import time
+from config import device
 from utils import box_cxcywh_to_xyxy, detect
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
@@ -149,6 +150,8 @@ def test(epoch, vis, test_loader, model, criterion, opts, visualize=False):
                 visualize_results(images, results)
                 
         mAP = evaluator.evaluate(test_loader.dataset)
+
+        print('mAP for Epoch{} : {}'.format(epoch, mAP))
 
 
 if __name__ == "__main__":
