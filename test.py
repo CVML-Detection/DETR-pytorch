@@ -96,6 +96,8 @@ def test(epoch, vis, test_loader, model, criterion, opts, visualize=False):
     state_dict = check_point['model_state_dict']
     model.load_state_dict(state_dict)
 
+    tic = time.time()
+
     is_coco = hasattr(test_loader.dataset, 'coco')  # if True the set is COCO else VOC
     if is_coco:
         print('COCO dataset evaluation...')
@@ -126,6 +128,19 @@ def test(epoch, vis, test_loader, model, criterion, opts, visualize=False):
                 exit()
 
             evaluator.get_info(info)
+
+            toc = time.time()
+
+            # ---------- print ----------
+            if idx % 1000 == 0 or idx == len(test_loader) - 1:
+                print('Epoch: [{0}]\t'
+                      'Step: [{1}/{2}]\t'
+                      'Loss: {loss:.4f}\t'
+                      'Time : {time:.4f}\t'
+                      .format(epoch,
+                              idx, len(test_loader),
+                              loss=loss,
+                              time=toc - tic))
 
             ## Visualize!
             if visualize:
