@@ -38,7 +38,7 @@ class Evaluator(object):
 
                 coco_result = {
                     'image_id': img_id,
-                    'category_id': coco_ids[int(pred_label)],     # FIXME 라벨 설정 필요 pred_label-1? pred_label?
+                    'category_id': pred_label,     # FIXME 라벨 설정 필요 pred_label-1? pred_label?
                     'score': float(pred_score),
                     'bbox': pred_box.tolist(),
                 }
