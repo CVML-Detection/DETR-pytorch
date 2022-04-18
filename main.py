@@ -26,7 +26,20 @@ def main():
     if opts.data_root == "D:/data/coco":
         # for window
         vis = visdom.Visdom(port='8097')
+    '''
+    if 'RANK' in os.environ and 'WORLD_SIZE' in os.environ:
+        rank = int(os.environ["RANK"])
+        world_size = int(os.environ['WORLD_SIZE'])
+        gpu = int(os.environ['LOCAL_RANK'])
+        print('111')
+    elif 'SLURM_PROCID' in os.environ:
+        rank = int(os.environ['SLURM_PROCID'])
+        gpu = rank % torch.cuda.device_count()
+        print('222')
+    else:
+        print('333')
 
+    '''
     # 3. dataset
     normalize = T.Compose([
         T.ToTensor(),
@@ -65,7 +78,10 @@ def main():
                                               pin_memory=True)
 
     # 5. model (opts.num_classes = 91)
-    model = DETR(num_classes=opts.num_classes, num_queries=100).to(device)
+    model = DETR(num_classes=opts.num_classes, num_queries=100)
+    if opts.distributed:
+        model = torch.nn.DataParallel(model)
+    model = model.to(device)
 
     # 6. criterion
     matcher = HungarianMatcher()
@@ -111,7 +127,7 @@ def main():
              criterion=criterion,
              opts=opts,
              visualize=False)
-
+    
 
 if __name__ == "__main__":
     main()
