@@ -13,6 +13,7 @@ from losses.hungarian_loss import HungarianLoss
 from losses.matcher import HungarianMatcher
 from train import train
 from test import test
+from parallel import DataParallelModel, DataParallelCriterion
 
 cudnn.benchmark = True
 
@@ -26,20 +27,7 @@ def main():
     if opts.data_root == "D:/data/coco":
         # for window
         vis = visdom.Visdom(port='8097')
-    '''
-    if 'RANK' in os.environ and 'WORLD_SIZE' in os.environ:
-        rank = int(os.environ["RANK"])
-        world_size = int(os.environ['WORLD_SIZE'])
-        gpu = int(os.environ['LOCAL_RANK'])
-        print('111')
-    elif 'SLURM_PROCID' in os.environ:
-        rank = int(os.environ['SLURM_PROCID'])
-        gpu = rank % torch.cuda.device_count()
-        print('222')
-    else:
-        print('333')
-
-    '''
+        
     # 3. dataset
     normalize = T.Compose([
         T.ToTensor(),
@@ -80,12 +68,16 @@ def main():
     # 5. model (opts.num_classes = 91)
     model = DETR(num_classes=opts.num_classes, num_queries=100)
     if opts.distributed:
-        model = torch.nn.DataParallel(model)
-    model = model.to(device)
+        # model = torch.nn.DataParallel(model)
+        model = DataParallelModel(model, device_ids=device_ids)
+    model = model.cuda()
 
     # 6. criterion
     matcher = HungarianMatcher()
-    criterion = HungarianLoss(num_classes=opts.num_classes, matcher=matcher).to(device)
+    criterion = HungarianLoss(num_classes=opts.num_classes, matcher=matcher)
+    if opts.distributed:
+        criterion = DataParallelCriterion(criterion, device_ids=device_ids)
+    criterion.cuda()
 
     # 7. optimizer
     optimizer = torch.optim.AdamW(params=model.parameters(), lr=1e-5, weight_decay=opts.weight_decay)

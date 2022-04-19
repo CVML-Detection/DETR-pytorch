@@ -1,9 +1,11 @@
 import argparse
 import torch
+import os
 
 # 2. device
 device_ids = [0, 1, 2, 3]
-device = torch.device('cuda:{}'.format(min(device_ids)) if torch.cuda.is_available() else 'cpu')
+os.environ["CUDA_VISIBLE_DEVICES"] = '0, 1, 2, 3'
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def parse(args):
     parser = argparse.ArgumentParser()
@@ -38,7 +40,7 @@ def parse(args):
     parser.add_argument('--distributed', type=bool, default=False)
 
     opts = parser.parse_args(args)
-    if len(device_ids) != 1:
+    if torch.cuda.device_count() != 1:
         opts.distributed = True
     print(opts)
     return opts
