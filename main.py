@@ -23,11 +23,11 @@ def main():
     opts = parse(sys.argv[1:])
     
     # 2. visdom
-    vis = None
-    if opts.data_root == "D:/data/coco":
-        # for window
-        vis = visdom.Visdom(port='8097')
-        
+    if opts.visdom:
+        vis = visdom.Visdom(port=opts.port)
+    else:
+        vis = None
+
     # 3. dataset
     normalize = T.Compose([
         T.ToTensor(),
@@ -68,15 +68,12 @@ def main():
     # 5. model (opts.num_classes = 91)
     model = DETR(num_classes=opts.num_classes, num_queries=100)
     if opts.distributed:
-        # model = torch.nn.DataParallel(model)
-        model = DataParallelModel(model, device_ids=device_ids)
+        model = torch.nn.DataParallel(model)
     model = model.cuda()
 
     # 6. criterion
     matcher = HungarianMatcher()
     criterion = HungarianLoss(num_classes=opts.num_classes, matcher=matcher)
-    if opts.distributed:
-        criterion = DataParallelCriterion(criterion, device_ids=device_ids)
     criterion.cuda()
 
     # 7. optimizer
