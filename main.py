@@ -13,6 +13,7 @@ from losses.hungarian_loss import HungarianLoss
 from losses.matcher import HungarianMatcher
 from train import train
 from test import test
+from parallel import DataParallelModel, DataParallelCriterion
 
 cudnn.benchmark = True
 
@@ -22,10 +23,10 @@ def main():
     opts = parse(sys.argv[1:])
     
     # 2. visdom
-    vis = None
-    if opts.data_root == "D:/data/coco":
-        # for window
-        vis = visdom.Visdom(port='8097')
+    if opts.visdom:
+        vis = visdom.Visdom(port=opts.port)
+    else:
+        vis = None
 
     # 3. dataset
     normalize = T.Compose([
@@ -65,11 +66,15 @@ def main():
                                               pin_memory=True)
 
     # 5. model (opts.num_classes = 91)
-    model = DETR(num_classes=opts.num_classes, num_queries=100).to(device)
+    model = DETR(num_classes=opts.num_classes, num_queries=100)
+    if opts.distributed:
+        model = torch.nn.DataParallel(model)
+    model = model.cuda()
 
     # 6. criterion
     matcher = HungarianMatcher()
-    criterion = HungarianLoss(num_classes=opts.num_classes, matcher=matcher).to(device)
+    criterion = HungarianLoss(num_classes=opts.num_classes, matcher=matcher)
+    criterion.cuda()
 
     # 7. optimizer
     optimizer = torch.optim.AdamW(params=model.parameters(), lr=1e-5, weight_decay=opts.weight_decay)
@@ -111,7 +116,7 @@ def main():
              criterion=criterion,
              opts=opts,
              visualize=False)
-
+    
 
 if __name__ == "__main__":
     main()
