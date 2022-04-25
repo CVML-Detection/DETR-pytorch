@@ -77,7 +77,17 @@ def main():
     criterion.cuda()
 
     # 7. optimizer
-    optimizer = torch.optim.AdamW(params=model.parameters(), lr=1e-5, weight_decay=opts.weight_decay)
+    param_dicts = [
+        {"params": [p for n, p in model.named_parameters() if "backbone" not in n and p.requires_grad]},
+        {
+            "params": [p for n, p in model.named_parameters() if "backbone" in n and p.requires_grad],
+            "lr": opts.lr_backbone,
+        },
+    ]
+
+    optimizer = torch.optim.AdamW(param_dicts,
+                                  lr=opts.lr,
+                                  weight_decay=opts.weight_decay)
 
     # 8. scheduler
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=200, gamma=0.1)

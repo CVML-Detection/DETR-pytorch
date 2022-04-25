@@ -26,19 +26,24 @@ def train(epoch, vis, train_loader, model, criterion, optimizer, scheduler, opts
 
         toc = time.time()
 
+        lr = []
         for param_group in optimizer.param_groups:
-            lr = param_group['lr']
+            lr.append(param_group['lr'])
 
         # for each steps
         if idx % opts.vis_step == 0 or idx == len(train_loader) - 1:
             print('Epoch: [{0}]\t'
                   'Step: [{1}/{2}]\t'
                   'Loss: {loss:.4f}\t'
-                  'Learning rate: {lr:.7f} s \t'
+                  'Learning rate DETR: {lr1:.7f} s \t'
+                  'Learning rate backbone : {lr2:.7f} s \t'
                   'Time : {time:.4f}\t'
-                  .format(epoch, idx, len(train_loader),
+                  .format(epoch,
+                          idx,
+                          len(train_loader),
                           loss=loss,
-                          lr=lr,
+                          lr1=lr[0],
+                          lr2=lr[1],
                           time=toc - tic))
 
             if vis is not None:
@@ -52,6 +57,7 @@ def train(epoch, vis, train_loader, model, criterion, optimizer, scheduler, opts
                                    title='training loss',
                                    legend=['Total Loss']))
 
+    # save pth file
     if not os.path.exists(opts.save_path):
         os.mkdir(opts.save_path)
 
