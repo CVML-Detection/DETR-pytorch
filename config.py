@@ -11,7 +11,7 @@ def parse(args):
     parser = argparse.ArgumentParser()
     parser.add_argument('--port', type=str, default='2077')
     parser.add_argument('--visdom', type=bool, default=True)
-    parser.add_argument('--vis_step', type=int, default=10)
+    parser.add_argument('--vis_step', type=int, default=100)
 
     parser.add_argument('--epoch', type=int, default=300)               # 
     parser.add_argument('--lr', type=float, default=1e-4)               # initial lr (1e-5 after 200epoch)
@@ -38,7 +38,7 @@ def parse(args):
     # parser.add_argument('--data_root', type=str, default="/data1/coco")
     parser.add_argument('--data_type', type=str, default='coco', help='choose voc or coco')  # FIXME
     parser.add_argument('--num_classes', type=int, default=91)
-    parser.add_argument('--distributed', type=bool, default=False)
+    parser.add_argument('--distributed', type=bool, default=True)
 
     opts = parser.parse_args(args)
     if torch.cuda.device_count() != 1:

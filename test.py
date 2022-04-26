@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import torch
 import torch.nn.functional as F
 import time
@@ -9,30 +10,11 @@ from matplotlib.patches import Rectangle
 from utils import coco_label_map as label_map
 from utils import coco_color_array
 from evaluator import Evaluator
+from utils import coco_label_idx_91 as label_idx_91
 
-
-def post_process(outputs, target_sizes):
-    '''
-    convert output of network to result(dictionary)
-    :param outputs: outputs = {'pred_logits': ~ , 'pred_boxes': ~ }
-    :param target_sizes:
-    :return:
-    '''
-    out_logits, out_bbox = outputs['pred_logits'], outputs['pred_boxes']
-    assert len(out_logits) == len(target_sizes)
-    assert target_sizes.shape[1] == 2
-
-    prob = F.softmax(out_logits, -1)
-    scores, labels = prob[..., :-1].max(-1)
-
-    # convert to [x0, y0, x1, y1] format
-    boxes = box_cxcywh_to_xyxy(out_bbox)
-    # and from relative [0, 1] to absolute [0, height] coordinates
-    img_h, img_w = target_sizes.unbind(1)
-    scale_fct = torch.stack([img_w, img_h, img_w, img_h], dim=1)
-    boxes = boxes * scale_fct[:, None, :]
-    results = [{'scores': s, 'labels': l, 'boxes': b} for s, l, b in zip(scores, labels, boxes)]
-    return results
+coco_color_array = np.random.randint(256, size=(91, 3)) / 255  # In plt, rgb color space's range from 0 to 1
+label_array = list(label_map.keys())  # dict
+label_dict = label_idx_91
 
 
 def visualize_results(images, results):
@@ -43,12 +25,12 @@ def visualize_results(images, results):
     :param color_array:
     :return:
     '''
-    label_array = list(label_map.keys())  # dict
     color_array = coco_color_array
 
     # 0. permute
     images = images.cpu()
     images = images.squeeze(0).permute(1, 2, 0)  # B, C, H, W --> H, W, C
+    h, w = images.size(0), images.size(1)
 
     # 1. un normalization
     images *= torch.Tensor([0.229, 0.224, 0.225])
@@ -58,28 +40,35 @@ def visualize_results(images, results):
     image_np = images.numpy()
 
     # 3. box scaling
-    results = results[0]
-    bbox = results['boxes'].cpu()
-    cls = results['labels'].cpu()
-    scores = results['scores'].cpu()
+    bbox = results[0].cpu()
+    cls = results[1].cpu()
+    scores = results[2].cpu()
+
+    ####################################
+    # set threshold for visualization
+    ####################################
+    keep = scores > 0.1
+    bbox = bbox[keep]
+    cls = cls[keep]
+    scores = scores[keep]
+    ####################################
 
     plt.figure('result')
     plt.imshow(image_np)
 
     for i in range(len(bbox)):
-
-        x1 = bbox[i][0]
-        y1 = bbox[i][1]
-        x2 = bbox[i][2]
-        y2 = bbox[i][3]
+        x1 = bbox[i][0].item() * w
+        y1 = bbox[i][1].item() * h
+        x2 = bbox[i][2].item() * w
+        y2 = bbox[i][3].item() * h
 
         # class and score
-        # plt.text(x=x1 - 5,
-        #          y=y1 - 5,
-        #          s=label_array[int(cls[i])] + ' {:.2f}'.format(scores[i]),
-        #          fontsize=10,
-        #          bbox=dict(facecolor=color_array[int(cls[i])],
-        #                    alpha=0.5))
+        plt.text(x=x1 - 5,
+                 y=y1 - 5,
+                 s=label_array[label_dict[int(cls[i])]] + ' {:.2f}'.format(scores[i]),
+                 fontsize=10,
+                 bbox=dict(facecolor=color_array[int(cls[i])],
+                           alpha=0.5))
 
         # bounding box
         plt.gca().add_patch(Rectangle(xy=(x1, y1),
@@ -94,7 +83,8 @@ def visualize_results(images, results):
 def test(epoch, vis, test_loader, model, criterion, opts, visualize=False):
     print('Testing of epoch [{}]'.format(epoch))
     model.eval()
-    check_point = torch.load(os.path.join(opts.save_path, opts.save_file_name) + '.{}.pth.tar'.format(epoch), map_location=device)
+    check_point = torch.load(os.path.join(opts.save_path, opts.save_file_name) + '.{}.pth.tar'.format(epoch),
+                             map_location=device)
     state_dict = check_point['model_state_dict']
     model.load_state_dict(state_dict)
 
@@ -121,7 +111,7 @@ def test(epoch, vis, test_loader, model, criterion, opts, visualize=False):
             sum_loss += loss.item()
 
             ## Evaluate!
-            pred_boxes, pred_labels, pred_scores = detect(pred=outputs, opts=opts)      # Detect 코드 수정 필요 (utils.py)
+            pred_boxes, pred_labels, pred_scores = detect(pred=outputs)
             if opts.data_type == 'coco':
                 img_id = test_loader.dataset.ids[idx]
                 img_info = test_loader.dataset.coco.loadImgs(ids=img_id)[0]
@@ -148,10 +138,9 @@ def test(epoch, vis, test_loader, model, criterion, opts, visualize=False):
 
             ## Visualize!
             if visualize:
-                orig_target_sizes = torch.stack([t["orig_size"] for t in targets], dim=0)
-                results = post_process(outputs, orig_target_sizes)
+                results = detect(outputs)
                 visualize_results(images, results)
-                
+
         mAP = evaluator.evaluate(test_loader.dataset)
         print('mAP for Epoch {} : {}'.format(epoch, mAP))
         print("Eval Time : {:.4f}".format(time.time() - tic))
@@ -217,6 +206,8 @@ if __name__ == "__main__":
 
     # 5. model (opts.num_classes = 91)
     model = DETR(num_classes=opts.num_classes, num_queries=100).to(device)
+    if opts.distributed:
+        model = torch.nn.DataParallel(model)
 
     # 6. criterion
     matcher = HungarianMatcher()
@@ -234,13 +225,13 @@ if __name__ == "__main__":
         print('\nNo check point to resume.. train from scratch.\n')
 
     # 11. test
-    test(epoch=4,
+    test(epoch=32,
          vis=vis,
          test_loader=test_loader,
          model=model,
          criterion=criterion,
          opts=opts,
-         visualize=False,
+         visualize=True,
          )
 
 
