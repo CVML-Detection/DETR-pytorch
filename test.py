@@ -225,7 +225,7 @@ if __name__ == "__main__":
         print('\nNo check point to resume.. train from scratch.\n')
 
     # 11. test
-    test(epoch=32,
+    test(epoch=40,
          vis=vis,
          test_loader=test_loader,
          model=model,
