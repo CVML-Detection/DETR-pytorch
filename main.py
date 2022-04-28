@@ -37,18 +37,21 @@ def main():
 
     # transforms_train #
     transforms_train = T.Compose([
-        T.Compose([
-            T.RandomResize([400, 500, 600]),
-            T.RandomSizeCrop(384, 600),
+        T.RandomSelect(
             T.RandomResize(scales, max_size=1333),
-        ]),
-        T.RandomResize([600], max_size=600),
+            T.Compose([
+                T.RandomResize([400, 500, 600]),
+                T.RandomSizeCrop(384, 600),
+                T.RandomResize(scales, max_size=1333),
+            ])
+        ),
+        T.RandomResize([800], max_size=800),
         normalize,
     ])
 
     # transforms_val #
     transforms_val = T.Compose([
-        T.RandomResize([600], max_size=600),
+        T.RandomResize([800], max_size=800),
         normalize,
     ])
 
