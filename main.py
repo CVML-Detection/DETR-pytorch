@@ -33,6 +33,20 @@ def main():
         T.ToTensor(),
         T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
+    scales = [480, 512, 544, 576, 608, 640, 672, 704, 736, 768, 800]
+
+    # transforms_train #
+    transforms_train = T.Compose([
+        T.Compose([
+            T.RandomResize([400, 500, 600]),
+            T.RandomSizeCrop(384, 600),
+            T.RandomResize(scales, max_size=1333),
+        ]),
+        T.RandomResize([600], max_size=600),
+        normalize,
+    ])
+
+    # transforms_val #
     transforms_val = T.Compose([
         T.RandomResize([600], max_size=600),
         normalize,
@@ -41,7 +55,7 @@ def main():
     train_set = COCO_Dataset(root=opts.data_root,
                              split='train',
                              download=True,
-                             transforms=transforms_val,
+                             transforms=transforms_train,
                              visualization=False)
 
     test_set = COCO_Dataset(root=opts.data_root,
