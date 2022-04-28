@@ -318,18 +318,12 @@ class ConvertCocoTarget(object):
         boxes = boxes[keep]
         classes = classes[keep]
 
-        if self.return_masks:
-            masks = masks[keep]
         if keypoints is not None:
             keypoints = keypoints[keep]
 
         target = {}
         target["boxes"] = boxes
         target["labels"] = classes
-
-        if self.return_masks:
-            target["masks"] = masks
-
         target["image_id"] = image_id
         if keypoints is not None:
             target["keypoints"] = keypoints
