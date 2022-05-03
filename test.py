@@ -99,6 +99,7 @@ def test(epoch, vis, test_loader, model, criterion, opts, visualize=False):
     model.load_state_dict(state_dict)
 
     tic = time.time()
+    sum_loss = 0
 
     is_coco = hasattr(test_loader.dataset, 'coco')  # if True the set is COCO else VOC
     if is_coco:
@@ -117,6 +118,7 @@ def test(epoch, vis, test_loader, model, criterion, opts, visualize=False):
             outputs = model(images)
             targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
             loss = criterion(outputs, targets)
+            sum_loss += loss.item()
 
             ## Evaluate!
             pred_boxes, pred_labels, pred_scores = detect(pred=outputs, opts=opts)      # Detect 코드 수정 필요 (utils.py)
@@ -151,8 +153,21 @@ def test(epoch, vis, test_loader, model, criterion, opts, visualize=False):
                 visualize_results(images, results)
                 
         mAP = evaluator.evaluate(test_loader.dataset)
+        mean_loss = sum_loss / len(test_loader)
 
         print('mAP for Epoch{} : {}'.format(epoch, mAP))
+
+        # @@@ VISDOM @@@
+        if vis is not None:
+            # loss plot
+            vis.line(X=torch.ones((1, 2)).cpu() * epoch,  # step
+                     Y=torch.Tensor([mean_loss, mAP]).unsqueeze(0).cpu(),
+                     win='test_loss',
+                     update='append',
+                     opts=dict(xlabel='step',
+                               ylabel='test',
+                               title='test loss',
+                               legend=['test Loss', 'mAP']))
 
 
 if __name__ == "__main__":
@@ -220,13 +235,13 @@ if __name__ == "__main__":
         print('\nNo check point to resume.. train from scratch.\n')
 
     # 11. test
-    test(epoch=4,
+    test(epoch=37,
          vis=vis,
          test_loader=test_loader,
          model=model,
          criterion=criterion,
          opts=opts,
-         visualize=False,
+         visualize=True,
          )
 
 
