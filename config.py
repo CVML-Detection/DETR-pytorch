@@ -21,7 +21,6 @@ def parse(args):
 
     parser.add_argument('--layer_encoder', type=int, default=6)
     parser.add_argument('--layer_decoder', type=int, default=6)
-
     # parser.add_argument('--burn_in', type=int, default=4000)  # 64000 / b_s | b_s == 16 -> 4000 | b_s == 64 -> 1000
 
     # parser.add_argument('--num_workers', type=int, default=4)
@@ -30,7 +29,7 @@ def parse(args):
     # parser.add_argument('--save_path', type=str, default='D:/saves/detr_cvml')
     parser.add_argument('--save_file_name', type=str, default='detr_coco_exp1')  # FIXME
     parser.add_argument('--conf_thres', type=float, default=0.05, help='min_score')
-    parser.add_argument('--start_epoch', type=int, default=0)
+    parser.add_argument('--start_epoch', type=int, default=17)
 
     # FIXME choose your dataset root
     parser.add_argument('--data_root', type=str, default='/home/cvmlserver7/Sungmin/data/coco')

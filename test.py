@@ -157,6 +157,18 @@ def test(epoch, vis, test_loader, model, criterion, opts, visualize=False):
                                title='test loss',
                                legend=['test Loss', 'mAP']))
 
+        # @@@ VISDOM @@@
+        if vis is not None:
+            # loss plot
+            vis.line(X=torch.ones((1, 2)).cpu() * epoch,  # step
+                     Y=torch.Tensor([mean_loss, mAP]).unsqueeze(0).cpu(),
+                     win='test_loss',
+                     update='append',
+                     opts=dict(xlabel='step',
+                               ylabel='test',
+                               title='test loss',
+                               legend=['test Loss', 'mAP']))
+
 
 if __name__ == "__main__":
 
