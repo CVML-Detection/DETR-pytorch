@@ -3,9 +3,8 @@ import torch
 import os
 
 # 2. device
-device_ids = [0, 1]
-os.environ["CUDA_VISIBLE_DEVICES"] = '0, 1'
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device_ids = [0]     # 사용할 Device ID 설정
+device = torch.device('cuda:{}' if torch.cuda.is_available() else 'cpu')
 
 def parse(args):
     parser = argparse.ArgumentParser()
@@ -23,7 +22,7 @@ def parse(args):
     parser.add_argument('--layer_decoder', type=int, default=6)
     # parser.add_argument('--burn_in', type=int, default=4000)  # 64000 / b_s | b_s == 16 -> 4000 | b_s == 64 -> 1000
 
-    # parser.add_argument('--num_workers', type=int, default=4)
+    parser.add_argument('--num_workers', type=int, default=0)
     # parser.add_argument('--resize', type=int, help='320, 416, 608', default=416)
     parser.add_argument('--save_path', type=str, default='./saves')
     # parser.add_argument('--save_path', type=str, default='D:/saves/detr_cvml')
@@ -37,10 +36,22 @@ def parse(args):
     # parser.add_argument('--data_root', type=str, default="/data1/coco")
     parser.add_argument('--data_type', type=str, default='coco', help='choose voc or coco')  # FIXME
     parser.add_argument('--num_classes', type=int, default=91)
-    parser.add_argument('--distributed', type=bool, default=True)
+    parser.add_argument('--dist_mode', type=str, default='dp', help='dp or ddp or none')            # DP 인지 DDP 인지 설정
 
     opts = parser.parse_args(args)
-    if torch.cuda.device_count() != 1:
+    # if torch.cuda.device_count() != 1:
+    #     opts.distributed = True
+
+    if len(device_ids) == 1:
+        opts.distributed = False
+        opts.dist_mode = 'none'
+    else:
         opts.distributed = True
+    opts.gpu_id = min(device_ids)       # device id의 맨 첫번째
+
     print(opts)
     return opts
+
+if __name__ == '__main__':
+    import sys
+    opts = parse(sys.argv[1:])
