@@ -4,7 +4,7 @@ import os
 
 # 2. device
 device_ids = [0]     # 사용할 Device ID 설정
-device = torch.device('cuda:{}' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cuda:{}'.format(min(device_ids)) if torch.cuda.is_available() else 'cpu')
 
 def parse(args):
     parser = argparse.ArgumentParser()
