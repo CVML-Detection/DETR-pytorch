@@ -6,9 +6,10 @@ import os
 device_ids = [0]     # 사용할 Device ID 설정
 device = torch.device('cuda:{}'.format(min(device_ids)) if torch.cuda.is_available() else 'cpu')
 
+
 def parse(args):
     parser = argparse.ArgumentParser()
-    parser.add_argument('--port', type=str, default='2077')
+    parser.add_argument('--port', type=str, default='8097')
     parser.add_argument('--visdom', type=bool, default=True)
     parser.add_argument('--vis_step', type=int, default=100)
 
