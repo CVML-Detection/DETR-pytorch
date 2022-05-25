@@ -38,19 +38,14 @@ def find_free_port():
 def main_worker(rank, world_size, opts, master_addr, master_port):
     # rank setting
     if opts.dist_mode == 'ddp':
-        torch.cuda.set_device(opts.gpu_id)
-        if opts.rank is not None:
-            print("\nUse GPU: {} for training".format(opts.gpu_id))
-            print("RANK: {}, World Size: {}".format(rank, world_size))
-        # dist.init_process_group(backend='nccl',
-        #                         init_method='tcp://127.0.0.1:3457',
-        #                         world_size=world_size,
-        #                         rank=opts.rank)
+        torch.cuda.set_device(device_ids[rank])
+        print("\nUse GPU: {} for training".format(device_ids[rank]))
+        print("RANK: {}, World Size: {}".format(rank, world_size))
         os.environ['MASTER_ADDR'] = master_addr
         os.environ['MASTER_PORT'] = master_port
         print(f"{master_addr=} {master_port=}")
         dist.init_process_group(backend='nccl', rank=rank, world_size=world_size)
-        print("Use GPU(rank): {} for training | World Size : {}".format(torch.distributed.get_rank(), torch.distributed.get_world_size()))
+        print("\nUse RANK: {} for training | World Size : {}".format(torch.distributed.get_rank(), torch.distributed.get_world_size()))
         # dist.destroy_process_group()
         print('Process Group Loaded!')
 
@@ -129,21 +124,23 @@ def main_worker(rank, world_size, opts, master_addr, master_port):
     # 5. model (opts.num_classes = 91)
     if opts.distributed:
         if opts.dist_mode == 'ddp':
-            model = DETR(num_classes=opts.num_classes, num_queries=100).cuda(opts.gpu_id)
-            model = DDP(module=model, device_ids=[opts.gpu_id], find_unused_parameters=True)
-        elif opts.dist_mode == 'dp':
             model = DETR(num_classes=opts.num_classes, num_queries=100)
-            model = torch.nn.DataParallel(model)
-            model = model.cuda()
+            model = model.cuda(device_ids[rank])
+            model = DDP(module=model, device_ids=[device_ids[rank]], find_unused_parameters=True)
+        elif opts.dist_mode == 'dp':
+            model = DETR(num_classes=opts.num_classes, num_queries=100).cuda(device)
+            model = torch.nn.DataParallel(module=model, device_ids=device_ids)
     else:
-        model = DETR(num_classes=opts.num_classes, num_queries=100)
-        model = model.cuda()
+        model = DETR(num_classes=opts.num_classes, num_queries=100).cuda(device)
 
 
     # 6. criterion
     matcher = HungarianMatcher()
     criterion = HungarianLoss(num_classes=opts.num_classes, matcher=matcher)
-    criterion.cuda()        # FIXME FIXME check
+    if opts.dist_mode == 'ddp':
+        criterion.cuda(device_ids[rank])
+    else:
+        criterion.cuda(device)
 
 
     # 7. optimizer
@@ -167,7 +164,7 @@ def main_worker(rank, world_size, opts, master_addr, master_port):
 
         checkpoint = torch.load(os.path.join(opts.save_path, opts.save_file_name) + '.{}.pth.tar'
                                 .format(opts.start_epoch - 1),
-                                map_location=torch.device('cuda:{}'.format(0)))
+                                map_location=torch.device('cuda:{}'.format(0)))         # FIXME
         model.load_state_dict(checkpoint['model_state_dict'])                          # load model state dict
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])                  # load optimization state dict
         scheduler.load_state_dict(checkpoint['scheduler_state_dict'])                  # load scheduler state dict
@@ -212,9 +209,7 @@ def main():
                 nprocs=world_size,
                 join=True)
     else:
-        main_worker(opts.gpu_id, world_size, opts, master_addr, master_port)
-
-
+        main_worker(opts.gpu_id_min, world_size, opts, master_addr, master_port)
     
 
 if __name__ == "__main__":
