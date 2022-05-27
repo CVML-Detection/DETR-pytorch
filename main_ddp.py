@@ -37,8 +37,8 @@ def find_free_port():
 
 def main_worker(rank, world_size, opts, master_addr, master_port):
     # rank setting
+    opts.rank = rank
     if opts.dist_mode == 'ddp':
-        opts.rank = rank
         opts.dist_gpu_id = device_ids[rank]
         torch.cuda.set_device(opts.dist_gpu_id)
         print("\nUse GPU: {} for training".format(opts.dist_gpu_id))
