@@ -47,6 +47,7 @@ def main_worker(rank, world_size, opts, master_addr, master_port):
         dist.init_process_group(backend='nccl', rank=rank, world_size=world_size)
         print("\nUse RANK: {} for training | World Size : {}".format(torch.distributed.get_rank(), torch.distributed.get_world_size()))
         # dist.destroy_process_group()
+        torch.distributed.barrier()
         print('Process Group Loaded!')
 
     # 2. visdom
@@ -124,8 +125,7 @@ def main_worker(rank, world_size, opts, master_addr, master_port):
     # 5. model (opts.num_classes = 91)
     if opts.distributed:
         if opts.dist_mode == 'ddp':
-            model = DETR(num_classes=opts.num_classes, num_queries=100)
-            model = model.cuda(device_ids[rank])
+            model = DETR(num_classes=opts.num_classes, num_queries=100).cuda(device_ids[rank])
             model = DDP(module=model, device_ids=[device_ids[rank]], find_unused_parameters=True)
         elif opts.dist_mode == 'dp':
             model = DETR(num_classes=opts.num_classes, num_queries=100).cuda(device)
