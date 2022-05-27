@@ -130,48 +130,52 @@ def test(epoch, vis, test_loader, model, criterion, opts, visualize=False):
             toc = time.time()
 
             # ---------- print ----------
-            if idx % 1000 == 0 or idx == len(test_loader) - 1:
-                print('Epoch: [{0}]\t'
-                      'Step: [{1}/{2}]\t'
-                      'Loss: {loss:.4f}\t'
-                      'Time : {time:.4f}\t'
-                      .format(epoch,
-                              idx, len(test_loader),
-                              loss=loss,
-                              time=toc - tic))
+            if opts.rank == 0:
+            
+                if idx % 1000 == 0 or idx == len(test_loader) - 1:
+                    
+                        print('Epoch: [{0}]\t'
+                            'Step: [{1}/{2}]\t'
+                            'Loss: {loss:.4f}\t'
+                            'Time : {time:.4f}\t'
+                            .format(epoch,
+                                    idx, len(test_loader),
+                                    loss=loss,
+                                    time=toc - tic))
 
-            ## Visualize!
-            if visualize:
-                results = detect(outputs)
-                visualize_results(images, results)
+                ## Visualize!
+                if visualize:
+                    results = detect(outputs)
+                    visualize_results(images, results)
 
-        mAP = evaluator.evaluate(test_loader.dataset)
-        print('mAP for Epoch {} : {}'.format(epoch, mAP))
-        print("Eval Time : {:.4f}".format(time.time() - tic))
+        if opts.rank == 0:
+            mAP = evaluator.evaluate(test_loader.dataset)
+            print('mAP for Epoch {} : {}'.format(epoch, mAP))
+            print("Eval Time : {:.4f}".format(time.time() - tic))
 
-        mean_loss = sum_loss / len(test_loader)
-        if vis is not None:
-            # loss plot
-            vis.line(X=torch.ones((1, 2)).cpu() * epoch,  # step
-                     Y=torch.Tensor([mean_loss, mAP]).unsqueeze(0).cpu(),
-                     win='test_loss',
-                     update='append',
-                     opts=dict(xlabel='step',
-                               ylabel='test',
-                               title='test loss',
-                               legend=['test Loss', 'mAP']))
+            mean_loss = sum_loss / len(test_loader)
+            if vis is not None:
+                # loss plot
+                vis.line(X=torch.ones((1, 2)).cpu() * epoch,  # step
+                        Y=torch.Tensor([mean_loss, mAP]).unsqueeze(0).cpu(),
+                        win='test_loss',
+                        update='append',
+                        opts=dict(xlabel='step',
+                                ylabel='test',
+                                title='test loss',
+                                legend=['test Loss', 'mAP']))
 
-        # @@@ VISDOM @@@
-        if vis is not None:
-            # loss plot
-            vis.line(X=torch.ones((1, 2)).cpu() * epoch,  # step
-                     Y=torch.Tensor([mean_loss, mAP]).unsqueeze(0).cpu(),
-                     win='test_loss',
-                     update='append',
-                     opts=dict(xlabel='step',
-                               ylabel='test',
-                               title='test loss',
-                               legend=['test Loss', 'mAP']))
+            # @@@ VISDOM @@@
+            if vis is not None:
+                # loss plot
+                vis.line(X=torch.ones((1, 2)).cpu() * epoch,  # step
+                        Y=torch.Tensor([mean_loss, mAP]).unsqueeze(0).cpu(),
+                        win='test_loss',
+                        update='append',
+                        opts=dict(xlabel='step',
+                                ylabel='test',
+                                title='test loss',
+                                legend=['test Loss', 'mAP']))
 
 
 if __name__ == "__main__":
