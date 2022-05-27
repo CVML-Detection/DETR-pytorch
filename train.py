@@ -9,14 +9,17 @@ def train(epoch, vis, train_loader, model, criterion, optimizer, scheduler, opts
     print('Training of epoch [{}]'.format(epoch))
     tic = time.time()
     model.train()
-
+    if opts.dist_mode == 'ddp':
+        train_device = opts.dist_gpu_id
+    else:
+        train_device = device
+        
     for idx, data in enumerate(train_loader):
-
         images = data[0]
         targets = data[1]
-        images = images.to(device)
+        images = images.to(train_device)
         outputs = model(images)
-        targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
+        targets = [{k: v.to(train_device) for k, v in t.items()} for t in targets]
         loss = criterion(outputs, targets)
 
         # update

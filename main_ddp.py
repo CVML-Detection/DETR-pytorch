@@ -38,8 +38,9 @@ def find_free_port():
 def main_worker(rank, world_size, opts, master_addr, master_port):
     # rank setting
     if opts.dist_mode == 'ddp':
-        torch.cuda.set_device(device_ids[rank])
-        print("\nUse GPU: {} for training".format(device_ids[rank]))
+        opts.dist_gpu_id = device_ids[rank]
+        torch.cuda.set_device(opts.dist_gpu_id)
+        print("\nUse GPU: {} for training".format(opts.dist_gpu_id))
         print("RANK: {}, World Size: {}".format(rank, world_size))
         os.environ['MASTER_ADDR'] = master_addr
         os.environ['MASTER_PORT'] = master_port
@@ -125,8 +126,8 @@ def main_worker(rank, world_size, opts, master_addr, master_port):
     # 5. model (opts.num_classes = 91)
     if opts.distributed:
         if opts.dist_mode == 'ddp':
-            model = DETR(num_classes=opts.num_classes, num_queries=100).cuda(device_ids[rank])
-            model = DDP(module=model, device_ids=[device_ids[rank]], find_unused_parameters=True)
+            model = DETR(num_classes=opts.num_classes, num_queries=100).cuda(opts.dist_gpu_id)
+            model = DDP(module=model, device_ids=[opts.dist_gpu_id], find_unused_parameters=True)
         elif opts.dist_mode == 'dp':
             model = DETR(num_classes=opts.num_classes, num_queries=100).cuda(device)
             model = torch.nn.DataParallel(module=model, device_ids=device_ids)
@@ -138,7 +139,7 @@ def main_worker(rank, world_size, opts, master_addr, master_port):
     matcher = HungarianMatcher()
     criterion = HungarianLoss(num_classes=opts.num_classes, matcher=matcher)
     if opts.dist_mode == 'ddp':
-        criterion.cuda(device_ids[rank])
+        criterion.cuda(opts.dist_gpu_id)
     else:
         criterion.cuda(device)
 
@@ -164,7 +165,7 @@ def main_worker(rank, world_size, opts, master_addr, master_port):
 
         checkpoint = torch.load(os.path.join(opts.save_path, opts.save_file_name) + '.{}.pth.tar'
                                 .format(opts.start_epoch - 1),
-                                map_location=torch.device('cuda:{}'.format(0)))         # FIXME
+                                map_location=torch.device(opts.dist_gpu_id))         # FIXME
         model.load_state_dict(checkpoint['model_state_dict'])                          # load model state dict
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])                  # load optimization state dict
         scheduler.load_state_dict(checkpoint['scheduler_state_dict'])                  # load scheduler state dict

@@ -83,8 +83,12 @@ def visualize_results(images, results):
 def test(epoch, vis, test_loader, model, criterion, opts, visualize=False):
     print('Testing of epoch [{}]'.format(epoch))
     model.eval()
+    if opts.dist_mode == 'ddp':
+        test_device = opts.dist_gpu_id
+    else:
+        test_device = device
     check_point = torch.load(os.path.join(opts.save_path, opts.save_file_name) + '.{}.pth.tar'.format(epoch),
-                             map_location=device)
+                             map_location=test_device)
     state_dict = check_point['model_state_dict']
     model.load_state_dict(state_dict)
 
@@ -104,9 +108,9 @@ def test(epoch, vis, test_loader, model, criterion, opts, visualize=False):
             ## Get Loss!
             images = data[0]
             targets = data[1]
-            images = images.to(device)
+            images = images.to(test_device)
             outputs = model(images)
-            targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
+            targets = [{k: v.to(test_device) for k, v in t.items()} for t in targets]
             loss = criterion(outputs, targets)
             sum_loss += loss.item()
 
