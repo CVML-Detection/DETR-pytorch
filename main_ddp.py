@@ -41,16 +41,14 @@ def main_worker(rank, world_size, opts, master_addr, master_port):
     if opts.dist_mode == 'ddp':
         opts.dist_gpu_id = device_ids[rank]
         torch.cuda.set_device(opts.dist_gpu_id)
-        print("\nUse GPU: {} for training".format(opts.dist_gpu_id))
-        print("RANK: {}, World Size: {}".format(rank, world_size))
         os.environ['MASTER_ADDR'] = master_addr
         os.environ['MASTER_PORT'] = master_port
-        print(f"{master_addr=} {master_port=}")
         dist.init_process_group(backend='nccl', rank=rank, world_size=world_size)
-        print("\nUse RANK: {} for training | World Size : {}".format(torch.distributed.get_rank(), torch.distributed.get_world_size()))
+        print("\nUse GPU: {} for training".format(opts.dist_gpu_id))
+        print(f"{master_addr=} {master_port=}")
+        print("RANK: {} | World Size : {}".format(torch.distributed.get_rank(), torch.distributed.get_world_size()))
         # dist.destroy_process_group()
         torch.distributed.barrier()
-        print('Process Group Loaded!')
 
     # 2. visdom
     if opts.visdom:
@@ -98,7 +96,6 @@ def main_worker(rank, world_size, opts, master_addr, master_port):
                             visualization=False)
 
     # 4. dataloader
-    print('Data Loading...')
     # for DDP
     if opts.dist_mode == 'ddp':
         train_loader = torch.utils.data.DataLoader(train_set,
@@ -121,8 +118,6 @@ def main_worker(rank, world_size, opts, master_addr, master_port):
                                             shuffle=False,
                                             num_workers=0,
                                             pin_memory=True)
-    print('Data Loaded!')
-
 
     # 5. model (opts.num_classes = 91)
     if opts.distributed:
@@ -162,18 +157,19 @@ def main_worker(rank, world_size, opts, master_addr, master_port):
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=200, gamma=0.1)
 
     # 9. resume
-    if opts.start_epoch != 0:
+    if opts.rank == 0:
+        if opts.start_epoch != 0:
 
-        checkpoint = torch.load(os.path.join(opts.save_path, opts.save_file_name) + '.{}.pth.tar'
-                                .format(opts.start_epoch - 1),
-                                map_location=torch.device(opts.dist_gpu_id))         # FIXME
-        model.load_state_dict(checkpoint['model_state_dict'])                          # load model state dict
-        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])                  # load optimization state dict
-        scheduler.load_state_dict(checkpoint['scheduler_state_dict'])                  # load scheduler state dict
-        print('\nLoaded checkpoint from epoch %d.\n' % (int(opts.start_epoch) - 1))
+            checkpoint = torch.load(os.path.join(opts.save_path, opts.save_file_name) + '.{}.pth.tar'
+                                    .format(opts.start_epoch - 1),
+                                    map_location=torch.device(opts.dist_gpu_id))         # FIXME
+            model.load_state_dict(checkpoint['model_state_dict'])                          # load model state dict
+            optimizer.load_state_dict(checkpoint['optimizer_state_dict'])                  # load optimization state dict
+            scheduler.load_state_dict(checkpoint['scheduler_state_dict'])                  # load scheduler state dict
+            print('\nLoaded checkpoint from epoch %d.\n' % (int(opts.start_epoch) - 1))
 
-    else:
-        print('\nNo check point to resume.. train from scratch.\n')
+        else:
+            print('\nNo check point to resume.. train from scratch.\n')
 
     for epoch in range(opts.start_epoch, opts.epoch):
 
