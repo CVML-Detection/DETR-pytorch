@@ -1,4 +1,4 @@
-# DETR 부수기
+# DETR Pytorch
 
 ### official-code : https://github.com/facebookresearch/detr
 
@@ -6,20 +6,18 @@
 
 ### paper : https://arxiv.org/abs/2005.12872
 
-- 하루 1시간씩 코딩
-
-- [x] Dataset ( 조성민 )
+- [x] Dataset
   - [x] Nested Tensor 분석 -> resize를 600x600로 구성
   - [x] Loss에 들어가는 GT를 어떻게 변형하는지 확인 (공집합 등)
   - [ ] Data Augmentation (Random Crop)
-- [x] Model ( 팽진욱 )
+- [x] Model
   - [x] 구조 이해
   - [x] Backbone (ResNet50 + Positional Encoding)
     - [ ] Positional Encoding 분석
   - [x] Transformer Encoder
   - [x] Transformer Decoder
-  - [ ] TEST -> 잘 돌아가는지 TEST
-- [x] Loss (Criterion) ( 팽진욱, 조성민 )
+  - [ ] TEST
+- [x] Loss (Criterion)
   - [x] Matcher (scipy.optimizer, Hungarian Algorithm)
   - [x] Hungarian Loss (loss label, boxes loss, cardinality loss)
   - [x] Check versus original loss
